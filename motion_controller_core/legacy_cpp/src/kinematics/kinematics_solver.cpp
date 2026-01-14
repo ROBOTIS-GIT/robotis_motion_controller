@@ -54,7 +54,7 @@ public:
     }
 
     unsigned int nj = chain_.getNrOfJoints();
-    
+
     // Joint Limits (needed for IK solver)
     q_min_.resize(nj);
     q_max_.resize(nj);
@@ -66,7 +66,7 @@ public:
     // Actually, KDL solvers usually need the limits.
     // Let's assume standard +/- PI or huge values if not available, OR rely on an additional passed-in limits vector?
     // The prompt implies URDF is the input.
-    // Let's use a very simple approach for limits: -2PI to 2PI for now as a default, 
+    // Let's use a very simple approach for limits: -2PI to 2PI for now as a default,
     // real implementations should probably extract them from the URDF DOM properly if critical.
     // However, since we are using kdl_parser which uses urdfdom, we might not have direct access to limits implementation-wise here easily.
     // For robust IK, limits are important. I'll set large default limits.
@@ -164,7 +164,7 @@ public:
         // 1. Build Full Model from URDF
         pinocchio::Model full_model;
         pinocchio::urdf::buildModelFromXML(urdf_content, full_model);
-        
+
         if (!full_model.existFrame(tip_link)) {
              std::cerr << "[PinocchioSolver] Tip link " << tip_link << " not found." << std::endl;
              return false;
@@ -175,7 +175,7 @@ public:
         // 2. Identify Chain Joints (Tip -> Base)
         // We traverse up from tip joint to base link's parent joint.
         std::vector<pinocchio::JointIndex> chain_joints;
-        
+
         // Find base_link frame/joint
         pinocchio::JointIndex base_joint_id = 0; // Default to Universe
         if (base_link != "universe" && base_link != "world" && full_model.existFrame(base_link)) {
@@ -189,20 +189,20 @@ public:
              chain_joints.push_back(current_joint);
              current_joint = full_model.parents[current_joint];
         }
-        
+
         // Identify joints to LOCK (all joints NOT in chain)
         std::vector<pinocchio::JointIndex> joints_to_lock;
         // Mark chain joints
         std::vector<bool> is_chain_joint(full_model.njoints, false);
         for (auto j : chain_joints) is_chain_joint[j] = true;
-        
+
         // Populate lock list (skip universe=0)
         for (pinocchio::JointIndex i = 1; i < full_model.njoints; ++i) {
             if (!is_chain_joint[i]) {
                 joints_to_lock.push_back(i);
             }
         }
-        
+
         // Reference configuration (neutral) for locked joints
         Eigen::VectorXd q_ref = pinocchio::neutral(full_model);
 
@@ -210,7 +210,7 @@ public:
         // This creates a model with ONLY the chain joints active.
         pinocchio::buildReducedModel(full_model, joints_to_lock, q_ref, model_);
         data_ = pinocchio::Data(model_);
-        
+
         // Update tip frame ID in Reduced Model
         if (model_.existFrame(tip_link)) {
              tip_frame_id_ = model_.getFrameId(tip_link);
@@ -223,14 +223,14 @@ public:
         // Compute oMbase in Reduced Model (it's constant since parents are locked/removed)
         pinocchio::forwardKinematics(model_, data_, pinocchio::neutral(model_));
         pinocchio::updateFramePlacements(model_, data_);
-        
+
         if (model_.existFrame(base_link)) {
             pinocchio::FrameIndex base_frame_id = model_.getFrameId(base_link);
             oMbase_inv_ = data_.oMf[base_frame_id].inverse();
         } else {
             oMbase_inv_ = pinocchio::SE3::Identity();
         }
-        
+
         J_.resize(6, model_.nv); // Resize Jacobian
         J_.setZero();
 
@@ -247,62 +247,62 @@ public:
           std::cerr << "[PinocchioSolver] Model joint size (" << model_.nq << ") != input q size (" << q.size() << ")" << std::endl;
           return false;
       }
-      
+
       pinocchio::forwardKinematics(model_, data_, q);
       pinocchio::updateFramePlacements(model_, data_);
-      
+
       const auto& oMtip = data_.oMf[tip_frame_id_];
-      
+
       // Compute relative pose: Base -> Tip
       // baseMtip = oMbase^-1 * oMtip
       pinocchio::SE3 baseMtip = oMbase_inv_ * oMtip;
-      
+
       pose = Eigen::Isometry3d::Identity();
       pose.linear() = baseMtip.rotation();
       pose.translation() = baseMtip.translation();
-      
+
       return true;
   }
 
   bool solveIK(const Eigen::Isometry3d& target_pose, const Eigen::VectorXd& q_init, Eigen::VectorXd& q_out) override
   {
       if (q_init.size() != model_.nq) return false;
-      
+
       Eigen::VectorXd q = q_init;
       const double eps = 1e-6;
       const int max_iter = 100;
-      const double dt = 0.1; 
+      const double dt = 0.1;
       const double damp = 1e-12;
-      
+
       pinocchio::SE3 baseMtarget(target_pose.linear(), target_pose.translation());
       pinocchio::SE3 oMtarget = oMbase_inv_.inverse() * baseMtarget;
-      
+
       for(int i=0; i<max_iter; ++i) {
           pinocchio::forwardKinematics(model_, data_, q);
           pinocchio::updateFramePlacements(model_, data_);
-          
+
           const pinocchio::SE3& current_pose = data_.oMf[tip_frame_id_];
           pinocchio::Motion err = pinocchio::log6(current_pose.inverse() * oMtarget);
-          
+
           if(err.toVector().norm() < eps) {
               q_out = q;
               return true;
           }
-          
+
           pinocchio::computeFrameJacobian(model_, data_, q, tip_frame_id_, pinocchio::LOCAL, J_);
-          
+
           pinocchio::Data::Matrix6x Jlog;
           pinocchio::Jlog6(current_pose.inverse() * oMtarget, Jlog);
           J_ = -Jlog * J_;
-          
+
           pinocchio::Data::Matrix6 JJt;
           JJt.noalias() = J_ * J_.transpose();
           JJt.diagonal().array() += damp;
-          
+
           Eigen::VectorXd v = -J_.transpose() * JJt.ldlt().solve(err.toVector());
           q = pinocchio::integrate(model_, q, v * dt);
       }
-      
+
       return false;
   }
 
@@ -310,8 +310,8 @@ private:
   pinocchio::Model model_;
   pinocchio::Data data_;
   pinocchio::FrameIndex tip_frame_id_;
-  pinocchio::SE3 oMbase_inv_; 
-  pinocchio::Data::Matrix6x J_; 
+  pinocchio::SE3 oMbase_inv_;
+  pinocchio::Data::Matrix6x J_;
 };
 
 
@@ -321,9 +321,9 @@ private:
 KinematicsSolver::KinematicsSolver() = default;
 KinematicsSolver::~KinematicsSolver() = default;
 
-bool KinematicsSolver::init(const std::string& urdf_content, 
-                     const std::string& base_link, 
-                     const std::string& tip_link, 
+bool KinematicsSolver::init(const std::string& urdf_content,
+                     const std::string& base_link,
+                     const std::string& tip_link,
                      SolverType type)
 {
   switch (type) {
