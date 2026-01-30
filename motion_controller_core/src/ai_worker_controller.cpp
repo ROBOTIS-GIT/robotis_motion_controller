@@ -119,6 +119,14 @@ namespace motion_controller_core
             l_bound_ds_.segment(si_index_.slack_q_max_start, si_index_.slack_q_max_size).setZero();
             l_bound_ds_(si_index_.slack_sing_start) = 0.0;
             l_bound_ds_(si_index_.slack_sel_col_start) = 0.0;
+
+            // Tighten feasibility by limiting slack magnitude
+            u_bound_ds_.segment(si_index_.slack_q_min_start, si_index_.slack_q_min_size)
+                .setConstant(DEFAULT_MAX_SLACK);
+            u_bound_ds_.segment(si_index_.slack_q_max_start, si_index_.slack_q_max_size)
+                .setConstant(DEFAULT_MAX_SLACK);
+            u_bound_ds_(si_index_.slack_sing_start) = DEFAULT_MAX_SLACK;
+            u_bound_ds_(si_index_.slack_sel_col_start) = DEFAULT_MAX_SLACK;
         }
     
         void QPIK::setIneqConstraint()
@@ -157,7 +165,7 @@ namespace motion_controller_core
     
             A_ineq_ds_.block(si_index_.con_sel_col_start, si_index_.qdot_start, si_index_.con_sel_col_size, si_index_.qdot_size) = min_dist_res.grad.transpose();
             A_ineq_ds_.block(si_index_.con_sel_col_start, si_index_.slack_sel_col_start, si_index_.con_sel_col_size, si_index_.slack_sel_col_size) = MatrixXd::Identity(si_index_.con_sel_col_size, si_index_.slack_sel_col_size);
-            l_ineq_ds_(si_index_.con_sel_col_start) = - DEFAULT_CBF_ALPHA*(min_dist_res.distance -0.05);
+            l_ineq_ds_(si_index_.con_sel_col_start) = - DEFAULT_CBF_ALPHA*(min_dist_res.distance -0.02);
         }
     
         void QPIK::setEqConstraint()
