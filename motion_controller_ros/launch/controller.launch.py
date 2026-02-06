@@ -3,7 +3,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition, UnlessCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.substitutions import PathJoinSubstitution
@@ -37,9 +37,12 @@ def generate_launch_description():
                               default_value=PathJoinSubstitution([
                                   FindPackageShare('motion_controller_ros'),
                                   'config',
-                                  'ai_worker_config.yaml'
+                                  'controller_config.yaml'
                               ]),
-                              description='Path to ai_worker_controller config file.'),
+                              description='Path to controller config file.'),
+        DeclareLaunchArgument('controller_type',
+                              default_value='ai_worker',
+                              description='Controller type (without _controller_node).'),
     ]
 
     start_interactive_marker = LaunchConfiguration('start_interactive_marker')
@@ -48,10 +51,14 @@ def generate_launch_description():
     base_frame = LaunchConfiguration('base_frame')
     marker_scale = LaunchConfiguration('marker_scale')
     config_file = LaunchConfiguration('config_file')
+    controller_type = LaunchConfiguration('controller_type')
+    controller_node = PythonExpression([
+        "'", controller_type, "_controller_node'"
+    ])
 
     controller_node = Node(
         package='motion_controller_ros',
-        executable='ai_worker_controller_node',
+        executable=controller_node,
         parameters=[config_file, {
             'urdf_path': urdf_path,
             'srdf_path': srdf_path,
@@ -64,6 +71,9 @@ def generate_launch_description():
         executable='reference_checker_node',
         parameters=[config_file],
         output='screen',
+        condition=UnlessCondition(PythonExpression([
+            "'", controller_type, "' == 'joint_space'"
+        ])),
     )
 
     interactive_marker = Node(
@@ -72,7 +82,6 @@ def generate_launch_description():
         name='eef_interactive_marker_node',
         parameters=[{
             'base_frame': base_frame,
-            'marker_scale': marker_scale,
         }],
         output='screen',
         condition=IfCondition(start_interactive_marker)

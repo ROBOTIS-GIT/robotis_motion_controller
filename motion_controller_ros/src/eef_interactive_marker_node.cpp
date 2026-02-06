@@ -40,7 +40,6 @@ namespace motion_controller_ros
             // left_link_ = this->declare_parameter<std::string>("left_link", "end_effector_l_link");
             right_link_ = this->declare_parameter<std::string>("right_link", "arm_r_link7");
             left_link_ = this->declare_parameter<std::string>("left_link", "arm_l_link7");
-            marker_scale_ = this->declare_parameter<double>("marker_scale", 0.2);
 
             r_goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/r_goal_pose", 10);
             l_goal_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/l_goal_pose", 10);
@@ -64,7 +63,7 @@ namespace motion_controller_ros
             marker.header.frame_id = frame_id;
             marker.name = name;
             marker.description = description;
-            marker.scale = marker_scale_;
+            marker.scale = 0.2;
             marker.pose = pose;
 
             visualization_msgs::msg::Marker box_marker;
@@ -237,7 +236,6 @@ namespace motion_controller_ros
         std::string base_frame_;
         std::string right_link_;
         std::string left_link_;
-        double marker_scale_;
         bool right_initialized_;
         bool left_initialized_;
         bool right_locked_;
