@@ -354,8 +354,13 @@ namespace motion_controller_ros
         debug_count = 0;
 
         try {
-            // Control loop is executing - update kinematics solver with current state
-            kinematics_solver_->updateState(q_, qdot_);
+            // kinematics_solver_->updateState(q_, qdot_);
+            // Use previously commanded joint goals as feedback state
+            const VectorXd q_feedback =
+                (q_desired_.size() == q_.size()) ? q_desired_ : q_;
+
+            // Control loop is executing - update kinematics solver with feedback state
+            kinematics_solver_->updateState(q_feedback, qdot_);
 
             // Get current and goal end-effector poses
             right_gripper_pose_ = kinematics_solver_->getPose(r_gripper_name_);
@@ -378,15 +383,28 @@ namespace motion_controller_ros
             // Publish current end-effector pose
             publishGripperPose(right_gripper_pose_, left_gripper_pose_);
 
-            // Compute desired velocity
-            Vector6d right_desired_vel = computeDesiredVelocity(right_gripper_pose_, r_goal_pose_);
-            Vector6d left_desired_vel = computeDesiredVelocity(left_gripper_pose_, l_goal_pose_);
+            // Slow-start ramp after activation delay
+            const auto activate_elapsed = this->get_clock()->now() - activate_start_;
+            double slow_start_scale = 1.0;
+            double slow_start_duration = 8.0;
+            if (slow_start_duration > 0.0) {
+                const double ramp_time = activate_elapsed.seconds() - 3.0;
+                if (ramp_time < slow_start_duration) {
+                    slow_start_scale = std::clamp(ramp_time / slow_start_duration, 0.0, 1.0);
+                }
+            }
+
+            // Compute desired velocity (scaled during slow-start)
+            Vector6d right_desired_vel =
+                computeDesiredVelocity(right_gripper_pose_, r_goal_pose_) * slow_start_scale;
+            Vector6d left_desired_vel =
+                computeDesiredVelocity(left_gripper_pose_, l_goal_pose_) * slow_start_scale;
             Vector6d right_elbow_desired_vel = Vector6d::Zero();
             Vector6d left_elbow_desired_vel = Vector6d::Zero();
             right_elbow_desired_vel.head(3) =
-                kp_position_ * (r_elbow_pose_.translation() - right_elbow_pose.translation());
+                kp_position_ * (r_elbow_pose_.translation() - right_elbow_pose.translation()) * slow_start_scale;
             left_elbow_desired_vel.head(3) =
-                kp_position_ * (l_elbow_pose_.translation() - left_elbow_pose.translation());
+                kp_position_ * (l_elbow_pose_.translation() - left_elbow_pose.translation()) * slow_start_scale;
             
             std::map<std::string, Vector6d> desired_task_velocities;
             desired_task_velocities[r_gripper_name_] = right_desired_vel;
@@ -426,7 +444,8 @@ namespace motion_controller_ros
             }
 
             // Compute command from current state
-            q_desired_ = q_ + optimal_velocities * dt_;
+            // q_desired_ = q_ + optimal_velocities * dt_;
+            q_desired_ = q_feedback + optimal_velocities * dt_;
 
             // Publish trajectory commands
             publishTrajectory(q_desired_);

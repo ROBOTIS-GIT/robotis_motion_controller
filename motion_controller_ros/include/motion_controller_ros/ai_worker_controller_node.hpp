@@ -47,6 +47,7 @@ namespace motion_controller_ros
         double cbf_alpha_;
         double collision_buffer_;
         double collision_safe_distance_;
+        double slow_start_duration_;
         std::string reactivate_topic_;
         std::string r_goal_pose_topic_;
         std::string l_goal_pose_topic_;
