@@ -53,10 +53,10 @@ joint_space_controller:
     slack_penalty: 1000.0
     cbf_alpha: 5.0
     joint_states_topic: "/joint_states"
-    right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
-    left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
-    right_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory_filtered"
-    left_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory_filtered"
+    right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/raw_joint_trajectory"
+    left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/raw_joint_trajectory"
+    right_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
+    left_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
     base_frame_id: "base_link"
     traj_frame_id: ""
 
