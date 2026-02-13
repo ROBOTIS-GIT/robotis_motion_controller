@@ -6,10 +6,14 @@
 
 #include "OsqpEigen/OsqpEigen.h"
 
-using namespace Eigen;
-
-namespace QP
+namespace motion_controller
 {
+namespace optimization
+{
+using Eigen::MatrixXd;
+using Eigen::SparseMatrix;
+using Eigen::VectorXd;
+
     /**
      * @brief Base class for QP solver.
      * 
@@ -58,11 +62,6 @@ namespace QP
                 l_ds_.setConstant(nc_, -OSQP_INFTY);
                 u_ds_.setConstant(nc_, OSQP_INFTY);
             }
-            /**
-             * @brief Solve the QP problem.
-             * @param sol          (Eigen::MatrixXd) Output solution matrix.
-             * @return (bool) True if the QP was solved successfully.
-             */
             /**
              * @brief Solve the QP problem.
              * 
@@ -190,4 +189,11 @@ namespace QP
 
             OsqpEigen::Status qp_status_;   // Status of the QP solver
     };
-} // namespace QP
+} // namespace optimization
+} // namespace motion_controller
+
+// Legacy alias (prefer motion_controller::optimization::QPBase).
+namespace QP
+{
+using QPBase = motion_controller::optimization::QPBase;
+}  // namespace QP

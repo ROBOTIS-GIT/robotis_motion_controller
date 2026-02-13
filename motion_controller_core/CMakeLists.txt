@@ -13,9 +13,9 @@ find_package(ament_cmake REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES
-    src/kinematics_solver.cpp
-    src/ai_worker_controller.cpp
-    src/joint_space_controller.cpp
+    src/kinematics/kinematics_solver.cpp
+    src/controllers/ai_worker_controller.cpp
+    src/controllers/joint_space_controller.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})

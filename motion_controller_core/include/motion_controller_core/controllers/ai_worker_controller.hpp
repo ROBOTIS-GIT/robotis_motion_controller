@@ -1,11 +1,12 @@
 #pragma once
-#include "motion_controller_core/QP_base.hpp"
-#include "motion_controller_core/kinematics_solver.hpp"
-#include "type_define.h"
 
-using namespace Eigen;
+#include "motion_controller_core/optimization/qp_base.hpp"
+#include "motion_controller_core/kinematics/kinematics_solver.hpp"
+#include "motion_controller_core/common/type_define.h"
 
-namespace motion_controller_core
+namespace motion_controller
+{
+namespace controllers
 {
     /**
      * @brief Class for solving inverse kinematics QP problems for manipulators.
@@ -13,7 +14,7 @@ namespace motion_controller_core
      * This class inherits from QPBase and implements methods to set up and solve
      * inverse kinematics problems for manipulators using Quadratic Programming.
      */
-    class QPIK : public QP::QPBase
+    class QPIK : public motion_controller::optimization::QPBase
     {
         public:
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -23,18 +24,20 @@ namespace motion_controller_core
              * @param robot_data (std::shared_ptr<KinematicsSolver>) Shared pointer to the KinematicsSolver class.
              * @param dt (double) Control loop time step in seconds.
              */
-            QPIK(std::shared_ptr<KinematicsSolver> robot_data, const double dt);
+            QPIK(std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data, const double dt);
             /**
              * @brief Set the wight vector for the cost terms
              * @param link_w_tracking (std::map<std::string, Vector6d>) Weight for task space velocity tracking per links.
              * @param w_damping  (Eigen::VectorXd) Weight for joint velocity damping; its size must same as dof.
              */
-            void setWeight(const std::map<std::string, Vector6d> link_w_tracking, const VectorXd w_damping);
+            void setWeight(
+                const std::map<std::string, motion_controller::common::Vector6d> link_w_tracking,
+                const Eigen::VectorXd w_damping);
             /**
              * @brief Set the desired task space velocity for the link.
              * @param link_xdot_desired (std::map<std::string, Vector6d>) Desired task space velocity (6D twist) per links.
              */ 
-            void setDesiredTaskVel(const std::map<std::string, Vector6d> &link_xdot_desired);
+            void setDesiredTaskVel(const std::map<std::string, motion_controller::common::Vector6d> &link_xdot_desired);
             /**
              * @brief Set controller parameters.
              * @param slack_penalty    (double) Slack penalty.
@@ -48,7 +51,7 @@ namespace motion_controller_core
              * @param opt_qdot    (Eigen::VectorXd) Optimal joint velocity.
              * @return (bool) True if the problem was solved successfully.
              */
-            bool getOptJointVel(VectorXd &opt_qdot);
+            bool getOptJointVel(Eigen::VectorXd &opt_qdot);
 
         private:
             /**
@@ -81,13 +84,13 @@ namespace motion_controller_core
                 int con_sel_col_size;
             }si_index_;
 
-            std::shared_ptr<KinematicsSolver> robot_data_;  // Shared pointer to the robot data class.
+            std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data_;  // Shared pointer to the robot data class.
             double dt_;                                           // control time step size
             int joint_dof_;                                       // Number of joints in the manipulator
 
-            std::map<std::string, Vector6d> link_xdot_desired_; // Desired task velocity per links
-            std::map<std::string, Vector6d> link_w_tracking_;   // weight for task velocity tracking per links; ||x_i_dot_des - J_i*q_dot||
-            VectorXd w_damping_;                                // weight for joint velocity damping;           || q_dot ||
+            std::map<std::string, motion_controller::common::Vector6d> link_xdot_desired_; // Desired task velocity per links
+            std::map<std::string, motion_controller::common::Vector6d> link_w_tracking_;   // weight for task velocity tracking per links; ||x_i_dot_des - J_i*q_dot||
+            Eigen::VectorXd w_damping_;                                         // weight for joint velocity damping; || q_dot ||
             double slack_penalty_;
             double cbf_alpha_;
             double collision_buffer_;
@@ -110,4 +113,5 @@ namespace motion_controller_core
              */
             void setEqConstraint() override;
     };
-} // namespace motion_controller_core
+} // namespace controllers
+} // namespace motion_controller

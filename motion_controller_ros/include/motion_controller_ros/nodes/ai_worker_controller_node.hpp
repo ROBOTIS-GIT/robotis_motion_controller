@@ -10,11 +10,15 @@
 #include <memory>
 #include <map>
 #include <unordered_map>
+#include <vector>
+#include <string>
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include "motion_controller_core/kinematics_solver.hpp"
-#include "motion_controller_core/ai_worker_controller.hpp"
+#include "motion_controller_core/kinematics/kinematics_solver.hpp"
+#include "motion_controller_core/controllers/ai_worker_controller.hpp"
+#include "motion_controller_core/common/type_define.h"
 
 using namespace Eigen;
 
@@ -22,7 +26,7 @@ namespace motion_controller_ros
 {
     /**
      * @brief ROS 2 wrapper node for AI Worker teleoperation controller.
-     * 
+     *
      * This node subscribes to target end-effector pose and current joint states to solve
      * inverse kinematics problems for AI Worker using Quadratic Programming.
      */
@@ -47,7 +51,6 @@ namespace motion_controller_ros
         double cbf_alpha_;
         double collision_buffer_;
         double collision_safe_distance_;
-        double slow_start_duration_;
         std::string reactivate_topic_;
         std::string r_goal_pose_topic_;
         std::string l_goal_pose_topic_;
@@ -79,7 +82,6 @@ namespace motion_controller_ros
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ref_reactivate_sub_;
 
         // Publishers
-        // rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr lift_pub_;
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_r_pub_;
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_l_pub_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr r_gripper_pose_pub_;
@@ -89,19 +91,28 @@ namespace motion_controller_ros
         rclcpp::TimerBase::SharedPtr control_timer_;
 
         // Motion controller components
-        std::shared_ptr<motion_controller_core::KinematicsSolver> kinematics_solver_;
-        std::shared_ptr<motion_controller_core::QPIK> qp_controller_;
+        std::shared_ptr<motion_controller::kinematics::KinematicsSolver> kinematics_solver_;
+        std::shared_ptr<motion_controller::controllers::QPIK> qp_controller_;
 
-        // State variables
+        // State variables (measured)
         VectorXd q_;
         VectorXd qdot_;
+
+        // State variables (observer / internal model)
+        VectorXd q_model_;
+        bool model_state_initialized_ = false;
+
+        // Commanded state
         VectorXd q_desired_;
+
+        // Task-space state
         Affine3d right_gripper_pose_;
         Affine3d left_gripper_pose_;
         Affine3d r_goal_pose_;
         Affine3d l_goal_pose_;
         Affine3d r_elbow_pose_;
         Affine3d l_elbow_pose_;
+
         bool r_goal_pose_received_;
         bool l_goal_pose_received_;
         bool r_elbow_pose_received_;
@@ -111,16 +122,17 @@ namespace motion_controller_ros
         bool activate_pending_;
         bool joint_state_received_;
 
+        // Control timing
+        double dt_;  // nominal time step in seconds
+        rclcpp::Time last_control_time_;
+        bool last_control_time_initialized_ = false;
+
         // Joint configuration
         std::vector<std::string> left_arm_joints_;
         std::vector<std::string> right_arm_joints_;
-        // std::string lift_joint_;
         std::map<std::string, int> joint_index_map_;
         std::vector<std::string> model_joint_names_;
         std::unordered_map<std::string, int> model_joint_index_map_;
-
-        // Control loop parameters
-        double dt_;  // Time step in seconds
 
         // Callbacks
         void rightGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -132,59 +144,22 @@ namespace motion_controller_ros
         void referenceReactivateCallback(const std_msgs::msg::Bool::SharedPtr msg);
         void controlLoopCallback();
 
-        // ================================ Helper functions ================================
-        /**
-         * @brief Initialize the joint configuration.
-         */
+        // Helper functions
         void initializeJointConfig();
-
-        /**
-         * @brief Publish the desired joint trajectory.
-         * @param q_desired (Eigen::VectorXd) Desired joint positions.
-         */
         void publishTrajectory(const VectorXd& q_desired);
-
-        /**
-         * @brief Create a joint trajectory message.
-         * @param arm_joint_names       (std::vector<std::string>) Arm joint names.
-         * @param positions             (Eigen::VectorXd) Joint positions.
-         * @param arm_indices           (std::vector<int>) Arm joint indices.
-         * @param gripper_joint_name    (std::string) Gripper joint name.
-         * @return (trajectory_msgs::msg::JointTrajectory) Joint trajectory message.
-         */
         trajectory_msgs::msg::JointTrajectory createTrajectoryMsgWithGripper(
             const std::vector<std::string>& arm_joint_names,
             const VectorXd& positions,
             const std::vector<int>& arm_indices,
             const std::string& gripper_joint_name) const;
-
-        /**
-         * @brief Publish the gripper pose.
-         * @param r_gripper_pose (Eigen::Affine3d) Right gripper pose.
-         * @param l_gripper_pose (Eigen::Affine3d) Left gripper pose.
-         */
         void publishGripperPose(const Affine3d& r_gripper_pose, const Affine3d& l_gripper_pose);
+        void extractJointStates(const sensor_msgs::msg::JointState::SharedPtr& msg);
 
-        /**
-         * @brief Extract joint states from message.
-         * @param msg       (sensor_msgs::msg::JointState::SharedPtr) Joint state message.
-         */
-         void extractJointStates(const sensor_msgs::msg::JointState::SharedPtr& msg);
-        
-        // ================================ Control computation functions ================================
-        /**
-         * @brief Compute pose matrix out of pose message.
-         * @param pose       (geometry_msgs::msg::PoseStamped) Pose message.
-         * @return (Affine3d) Computed pose matrix.
-         */
+        // Control computation functions
         Affine3d computePoseMat(const geometry_msgs::msg::PoseStamped& pose) const;
-
-        /**
-         * @brief Compute desired velocity out of current and goal poses.
-         * @param current_pose       (Affine3d) Current pose.
-         * @param goal_pose          (Affine3d) Goal pose.
-         * @return (Vector6d) Computed desired velocity.
-         */
-        Vector6d computeDesiredVelocity(const Affine3d& current_pose, const Affine3d& goal_pose) const;
+        motion_controller::common::Vector6d computeDesiredVelocity(
+            const Affine3d& current_pose,
+            const Affine3d& goal_pose) const;
     };
 }  // namespace motion_controller_ros
+

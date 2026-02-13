@@ -1,10 +1,17 @@
-#include "motion_controller_core/kinematics_solver.hpp"
+#include "motion_controller_core/kinematics/kinematics_solver.hpp"
 
 #include <iostream>
 #include <stdexcept>
 
-namespace motion_controller_core
+namespace motion_controller
 {
+namespace kinematics
+{
+    using Eigen::Matrix3d;
+    using Eigen::MatrixXd;
+    using Eigen::Vector3d;
+    using Eigen::VectorXd;
+
     KinematicsSolver::KinematicsSolver(const std::string& urdf_path, const std::string& srdf_path)
     : urdf_path_(urdf_path), srdf_path_(srdf_path)
     {
@@ -334,4 +341,5 @@ namespace motion_controller_core
         return results;
     }
 
-} // namespace motion_controller_core
+} // namespace kinematics
+} // namespace motion_controller

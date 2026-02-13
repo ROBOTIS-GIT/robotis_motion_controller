@@ -59,19 +59,23 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 
 # Create executable
 add_executable(ai_worker_controller_node 
-  src/ai_worker_controller_node.cpp
+  src/nodes/ai_worker_controller_node.cpp
 )
 
 add_executable(joint_space_controller_node 
-  src/joint_space_controller_node.cpp
+  src/nodes/joint_space_controller_node.cpp
+)
+
+add_executable(mini_leader_controller_node
+  src/nodes/mini_leader_controller_node.cpp
 )
 
 add_executable(eef_interactive_marker_node
-  src/eef_interactive_marker_node.cpp
+  src/utils/eef_interactive_marker_node.cpp
 )
 
 add_executable(reference_checker_node
-  src/reference_checker_node.cpp
+  src/utils/reference_checker_node.cpp
 )
 
 # Add include directories to the target
@@ -89,6 +93,12 @@ target_include_directories(joint_space_controller_node PRIVATE
   ${MOTION_CONTROLLER_CORE_INCLUDE_DIR}
 )
 
+target_include_directories(mini_leader_controller_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${EIGEN3_INCLUDE_DIR}
+  ${MOTION_CONTROLLER_CORE_INCLUDE_DIR}
+)
+
 # Link libraries
 ament_target_dependencies(ai_worker_controller_node
   rclcpp
@@ -100,6 +110,15 @@ ament_target_dependencies(ai_worker_controller_node
 )
 
 ament_target_dependencies(joint_space_controller_node
+  rclcpp
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  trajectory_msgs
+  ament_index_cpp
+)
+
+ament_target_dependencies(mini_leader_controller_node
   rclcpp
   std_msgs
   geometry_msgs
@@ -134,14 +153,22 @@ target_link_libraries(joint_space_controller_node
   OsqpEigen::OsqpEigen
 )
 
+target_link_libraries(mini_leader_controller_node
+  Eigen3::Eigen
+  pinocchio::pinocchio
+  OsqpEigen::OsqpEigen
+)
+
 # Link motion_controller_core
 if(motion_controller_core_FOUND)
   target_link_libraries(ai_worker_controller_node motion_controller_core::motion_controller_core)
   target_link_libraries(joint_space_controller_node motion_controller_core::motion_controller_core)
+  target_link_libraries(mini_leader_controller_node motion_controller_core::motion_controller_core)
 else()
   # Link with full path for fallback
   target_link_libraries(ai_worker_controller_node ${MOTION_CONTROLLER_CORE_LIB})
   target_link_libraries(joint_space_controller_node ${MOTION_CONTROLLER_CORE_LIB})
+  target_link_libraries(mini_leader_controller_node ${MOTION_CONTROLLER_CORE_LIB})
 endif()
 
 # Install executable
@@ -150,6 +177,10 @@ install(TARGETS ai_worker_controller_node
 )
 
 install(TARGETS joint_space_controller_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS mini_leader_controller_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -1,4 +1,4 @@
-#include "motion_controller_ros/ai_worker_controller_node.hpp"
+#include "motion_controller_ros/nodes/ai_worker_controller_node.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <algorithm>
@@ -127,9 +127,9 @@ namespace motion_controller_ros
         
         try {
             RCLCPP_INFO(this->get_logger(), "Loading URDF and initializing kinematics solver...");
-            kinematics_solver_ = std::make_shared<motion_controller_core::KinematicsSolver>(urdf_path_, srdf_path_);
+            kinematics_solver_ = std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);
             RCLCPP_INFO(this->get_logger(), "Initializing QP controller...");
-            qp_controller_ = std::make_shared<motion_controller_core::QPIK>(kinematics_solver_, dt_);
+            qp_controller_ = std::make_shared<motion_controller::controllers::QPIK>(kinematics_solver_, dt_);
             qp_controller_->setControllerParams(slack_penalty_, cbf_alpha_, collision_buffer_, collision_safe_distance_);
 
             // Initialize state variables
@@ -395,35 +395,35 @@ namespace motion_controller_ros
             }
 
             // Compute desired velocity (scaled during slow-start)
-            Vector6d right_desired_vel =
+            motion_controller::common::Vector6d right_desired_vel =
                 computeDesiredVelocity(right_gripper_pose_, r_goal_pose_) * slow_start_scale;
-            Vector6d left_desired_vel =
+            motion_controller::common::Vector6d left_desired_vel =
                 computeDesiredVelocity(left_gripper_pose_, l_goal_pose_) * slow_start_scale;
-            Vector6d right_elbow_desired_vel = Vector6d::Zero();
-            Vector6d left_elbow_desired_vel = Vector6d::Zero();
+            motion_controller::common::Vector6d right_elbow_desired_vel = motion_controller::common::Vector6d::Zero();
+            motion_controller::common::Vector6d left_elbow_desired_vel = motion_controller::common::Vector6d::Zero();
             right_elbow_desired_vel.head(3) =
                 kp_position_ * (r_elbow_pose_.translation() - right_elbow_pose.translation()) * slow_start_scale;
             left_elbow_desired_vel.head(3) =
                 kp_position_ * (l_elbow_pose_.translation() - left_elbow_pose.translation()) * slow_start_scale;
             
-            std::map<std::string, Vector6d> desired_task_velocities;
+            std::map<std::string, motion_controller::common::Vector6d> desired_task_velocities;
             desired_task_velocities[r_gripper_name_] = right_desired_vel;
             desired_task_velocities[l_gripper_name_] = left_desired_vel;
             desired_task_velocities[r_elbow_name_] = right_elbow_desired_vel;
             desired_task_velocities[l_elbow_name_] = left_elbow_desired_vel;
 
             // Set weights for QP solver
-            std::map<std::string, Vector6d> weights;
-            Vector6d weight_right = Vector6d::Ones();
-            Vector6d weight_left = Vector6d::Ones();
+            std::map<std::string, motion_controller::common::Vector6d> weights;
+            motion_controller::common::Vector6d weight_right = motion_controller::common::Vector6d::Ones();
+            motion_controller::common::Vector6d weight_left = motion_controller::common::Vector6d::Ones();
             weight_right.head(3).setConstant(weight_position_);
             weight_right.tail(3).setConstant(weight_orientation_);
             weight_left.head(3).setConstant(weight_position_);
             weight_left.tail(3).setConstant(weight_orientation_);
             weights[r_gripper_name_] = weight_right;
             weights[l_gripper_name_] = weight_left;
-            Vector6d weight_right_elbow = Vector6d::Zero();
-            Vector6d weight_left_elbow = Vector6d::Zero();
+            motion_controller::common::Vector6d weight_right_elbow = motion_controller::common::Vector6d::Zero();
+            motion_controller::common::Vector6d weight_left_elbow = motion_controller::common::Vector6d::Zero();
             weight_right_elbow.head(3).setConstant(weight_elbow_position_);
             weight_left_elbow.head(3).setConstant(weight_elbow_position_);
             weights[r_elbow_name_] = weight_right_elbow;
@@ -471,7 +471,9 @@ namespace motion_controller_ros
         return pose_mat;
     }
 
-    Vector6d AIWorkerController::computeDesiredVelocity(const Affine3d& current_pose, const Affine3d& goal_pose) const
+    motion_controller::common::Vector6d AIWorkerController::computeDesiredVelocity(
+        const Affine3d& current_pose,
+        const Affine3d& goal_pose) const
     {
         // Compute position error
         Vector3d pos_error = goal_pose.translation() - current_pose.translation();
@@ -481,7 +483,7 @@ namespace motion_controller_ros
         Eigen::AngleAxisd angle_axis_error(rotation_error);
         Vector3d angle_axis = angle_axis_error.axis() * angle_axis_error.angle();
 
-        Vector6d desired_vel = Vector6d::Zero();
+        motion_controller::common::Vector6d desired_vel = motion_controller::common::Vector6d::Zero();
         desired_vel.head(3) = kp_position_ * pos_error;
         desired_vel.tail(3) = kp_orientation_ * angle_axis;
         

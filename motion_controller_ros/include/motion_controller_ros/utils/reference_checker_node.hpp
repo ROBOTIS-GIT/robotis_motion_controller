@@ -50,3 +50,4 @@ namespace motion_controller_ros
       bool l_goal_prev_set_;
   };
 }  // namespace motion_controller_ros
+

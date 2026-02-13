@@ -1,5 +1,4 @@
-#ifndef MOTION_CONTROLLER_CORE_KINEMATICS_SOLVER_HPP_
-#define MOTION_CONTROLLER_CORE_KINEMATICS_SOLVER_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -26,13 +25,16 @@
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/parsers/srdf.hpp>
 
-#include "type_define.h"
+#include "motion_controller_core/common/type_define.h"
 
-using namespace Eigen;
-
-namespace motion_controller_core
+namespace motion_controller
 {
-  using CollisionChecker::MinDistResult;
+namespace kinematics
+{
+  using motion_controller::common::collision_checker::MinDistResult;
+  using Eigen::Affine3d;
+  using Eigen::MatrixXd;
+  using Eigen::VectorXd;
 
   /**
   * @brief Generic Kinematics Solver class that provides FK and IK using a selectable backend.
@@ -67,16 +69,6 @@ namespace motion_controller_core
     * @return (Eigen::MatrixXd) Jacobian of the link.
     */
     virtual MatrixXd computeJacobian(const VectorXd& q, const std::string& link_name);
-
-    // /**
-    // * @brief Solve Inverse Kinematics.
-    // * 
-    // * @param target_pose Desired end-effector pose.
-    // * @param q_init Initial guess for joint positions.
-    // * @param q_out Output parameter for the computed joint positions.
-    // * @return true if solution found/converged, false otherwise.
-    // */
-    // bool solveIK(const Eigen::Isometry3d& target_pose, const Eigen::VectorXd& q_init, Eigen::VectorXd& q_out);
 
     // ================================ Get Functions ================================
     virtual const std::string getURDFPath() const {return urdf_path_;}
@@ -196,6 +188,5 @@ namespace motion_controller_core
     VectorXd qdot_ub_;  // Upper joint velocity limits of the manipulator.
   };                
 
-} // namespace motion_controller_core
-
-#endif // MOTION_CONTROLLER_CORE_KINEMATICS_SOLVER_HPP_
+} // namespace kinematics
+} // namespace motion_controller

@@ -10,11 +10,14 @@
 #include <memory>
 #include <map>
 #include <unordered_map>
+#include <vector>
+#include <string>
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
-#include "motion_controller_core/kinematics_solver.hpp"
-#include "motion_controller_core/joint_space_controller.hpp"
+#include "motion_controller_core/kinematics/kinematics_solver.hpp"
+#include "motion_controller_core/controllers/joint_space_controller.hpp"
 
 using namespace Eigen;
 
@@ -22,7 +25,7 @@ namespace motion_controller_ros
 {
     /**
      * @brief ROS 2 wrapper node for applying QP filters for manipulators.
-     * 
+     *
      * This class implements methods to set QP filter for avoiding joint limits and self collisions
      * while tracking the desired joint trajectory.
      */
@@ -61,7 +64,6 @@ namespace motion_controller_ros
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
 
         // Publishers
-        // rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr lift_pub_;
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_r_pub_;
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_l_pub_;
 
@@ -69,8 +71,8 @@ namespace motion_controller_ros
         rclcpp::TimerBase::SharedPtr control_timer_;
 
         // Motion controller components
-        std::shared_ptr<motion_controller_core::KinematicsSolver> kinematics_solver_;
-        std::shared_ptr<motion_controller_core::QPFilter> qp_filter_;
+        std::shared_ptr<motion_controller::kinematics::KinematicsSolver> kinematics_solver_;
+        std::shared_ptr<motion_controller::controllers::QPFilter> qp_filter_;
 
         // State variables
         VectorXd q_;
@@ -92,7 +94,6 @@ namespace motion_controller_ros
         // Joint configuration
         std::vector<std::string> left_arm_joints_;
         std::vector<std::string> right_arm_joints_;
-        // std::string lift_joint_;
         std::map<std::string, int> joint_index_map_;
         std::vector<std::string> model_joint_names_;
         std::unordered_map<std::string, int> model_joint_index_map_;
@@ -106,29 +107,13 @@ namespace motion_controller_ros
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
         void controlLoopCallback();
 
-        // ================================ Helper functions ================================
-        /**
-         * @brief Initialize the joint configuration.
-         */
+        // Helper functions
         void initializeJointConfig();
-
-        /**
-         * @brief Publish the desired joint trajectory.
-         * @param q_desired (Eigen::VectorXd) Desired joint positions.
-         */
         void publishTrajectory(const VectorXd& q_desired);
         void updateDesiredVelocityFromTrajectory(
             const trajectory_msgs::msg::JointTrajectory& msg,
             VectorXd& qdot_desired);
 
-        /**
-         * @brief Create a joint trajectory message.
-         * @param arm_joint_names       (std::vector<std::string>) Arm joint names.
-         * @param positions             (Eigen::VectorXd) Joint positions.
-         * @param arm_indices           (std::vector<int>) Arm joint indices.
-         * @param gripper_joint_name    (std::string) Gripper joint name.
-         * @return (trajectory_msgs::msg::JointTrajectory) Joint trajectory message.
-         */
         trajectory_msgs::msg::JointTrajectory createTrajectoryMsgWithGripper(
             const std::vector<std::string>& arm_joint_names,
             const VectorXd& positions,
@@ -137,10 +122,7 @@ namespace motion_controller_ros
             double gripper_position,
             const rclcpp::Duration& time_from_start) const;
 
-        /**
-         * @brief Extract joint states from message.
-         * @param msg       (sensor_msgs::msg::JointState::SharedPtr) Joint state message.
-         */
-         void extractJointStates(const sensor_msgs::msg::JointState::SharedPtr& msg);
+        void extractJointStates(const sensor_msgs::msg::JointState::SharedPtr& msg);
     };
 }  // namespace motion_controller_ros
+
