@@ -23,8 +23,8 @@ namespace motion_controller_ros
     /**
      * @brief ROS 2 wrapper node for applying QP filters for manipulators.
      * 
-     * This class inherits from QPBase and implements methods to set up and set
-     * QP filter for avoiding joint limits, self collisions etc.
+     * This class implements methods to set QP filter for avoiding joint limits and self collisions
+     * while tracking the desired joint trajectory.
      */
     class JointSpaceController : public rclcpp::Node
     {
@@ -119,7 +119,6 @@ namespace motion_controller_ros
         void publishTrajectory(const VectorXd& q_desired);
         void updateDesiredVelocityFromTrajectory(
             const trajectory_msgs::msg::JointTrajectory& msg,
-            const std::vector<std::string>& arm_joint_names,
             VectorXd& qdot_desired);
 
         /**

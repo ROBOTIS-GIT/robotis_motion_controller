@@ -165,7 +165,7 @@ void JointSpaceController::rightTrajectoryCallback(const trajectory_msgs::msg::J
             }
         }
     }
-    updateDesiredVelocityFromTrajectory(*msg, right_arm_joints_, qdot_desired_);
+    updateDesiredVelocityFromTrajectory(*msg, qdot_desired_);
     right_traj_received_ = true;
     last_right_traj_time_ = this->now();
 }
@@ -188,7 +188,7 @@ void JointSpaceController::leftTrajectoryCallback(const trajectory_msgs::msg::Jo
             }
         }
     }
-    updateDesiredVelocityFromTrajectory(*msg, left_arm_joints_, qdot_desired_);
+    updateDesiredVelocityFromTrajectory(*msg, qdot_desired_);
     left_traj_received_ = true;
     last_left_traj_time_ = this->now();
 }
@@ -240,7 +240,6 @@ void JointSpaceController::extractJointStates(const sensor_msgs::msg::JointState
 
 void JointSpaceController::updateDesiredVelocityFromTrajectory(
     const trajectory_msgs::msg::JointTrajectory& msg,
-    const std::vector<std::string>& arm_joint_names,
     VectorXd& qdot_desired)
 {
     if (msg.points.empty()) {
