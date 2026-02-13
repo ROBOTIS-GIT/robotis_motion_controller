@@ -8,9 +8,6 @@
 
 using namespace Eigen;
 
-// Define Vector6d as a 6D column vector
-using Vector6d = Vector<double, 6>;
-
 namespace QP
 {
     /**

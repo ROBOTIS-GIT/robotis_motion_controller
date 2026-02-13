@@ -1,6 +1,7 @@
 #pragma once
 #include "motion_controller_core/QP_base.hpp"
 #include "motion_controller_core/kinematics_solver.hpp"
+#include "type_define.h"
 
 using namespace Eigen;
 

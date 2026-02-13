@@ -26,7 +26,7 @@
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/parsers/srdf.hpp>
 
-#include "math_utils.h"
+#include "type_define.h"
 
 using namespace Eigen;
 
