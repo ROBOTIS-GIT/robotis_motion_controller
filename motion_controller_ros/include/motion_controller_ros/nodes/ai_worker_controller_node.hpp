@@ -59,14 +59,14 @@ namespace motion_controller_ros
         std::string joint_states_topic_;
         std::string right_traj_topic_;
         std::string left_traj_topic_;
+        std::string lift_topic_;
+        double lift_vel_bound_;
         std::string r_gripper_pose_topic_;
         std::string l_gripper_pose_topic_;
         std::string r_gripper_name_;
         std::string l_gripper_name_;
         std::string r_elbow_name_;
         std::string l_elbow_name_;
-        std::string base_frame_id_;
-        std::string traj_frame_id_;
         std::string right_gripper_joint_name_;
         std::string left_gripper_joint_name_;
         std::string urdf_path_;
@@ -84,6 +84,7 @@ namespace motion_controller_ros
         // Publishers
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_r_pub_;
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr arm_l_pub_;
+        rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr lift_pub_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr r_gripper_pose_pub_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr l_gripper_pose_pub_;
 
@@ -130,6 +131,8 @@ namespace motion_controller_ros
         // Joint configuration
         std::vector<std::string> left_arm_joints_;
         std::vector<std::string> right_arm_joints_;
+        std::string lift_joint_;
+        int lift_joint_index_ = -1;  // index in model q/qdot; -1 if not present
         std::map<std::string, int> joint_index_map_;
         std::vector<std::string> model_joint_names_;
         std::unordered_map<std::string, int> model_joint_index_map_;
@@ -152,6 +155,9 @@ namespace motion_controller_ros
             const VectorXd& positions,
             const std::vector<int>& arm_indices,
             const std::string& gripper_joint_name) const;
+        trajectory_msgs::msg::JointTrajectory createLiftTrajectoryMsg(
+            std::string lift_joint_name,
+            const double position) const;
         void publishGripperPose(const Affine3d& r_gripper_pose, const Affine3d& l_gripper_pose);
         void extractJointStates(const sensor_msgs::msg::JointState::SharedPtr& msg);
 

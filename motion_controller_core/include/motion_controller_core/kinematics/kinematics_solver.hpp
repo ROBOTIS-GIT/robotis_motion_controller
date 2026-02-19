@@ -121,6 +121,15 @@ namespace kinematics
     virtual std::pair<VectorXd,VectorXd> getJointVelocityLimit() const {return std::make_pair(qdot_lb_, qdot_ub_);}
 
     /**
+     * @brief Override joint velocity bounds for a specific generalized coordinate index.
+     * @param idx   (int) Index in q/qdot (0-based).
+     * @param lower (double) Lower velocity bound.
+     * @param upper (double) Upper velocity bound.
+     * @return (bool) True if index was valid and bounds were applied.
+     */
+    virtual bool setJointVelocityBoundsByIndex(const int idx, const double lower, const double upper);
+
+    /**
     * @brief Get the pose of the link in the task space.
     * @param link_name (std::string) Name of the link.
     * @return (Eigen::Affine3d) Pose of the link in the task space.

@@ -15,9 +15,11 @@ def generate_launch_description():
                               description='Start interactive markers for goal poses.'),
         DeclareLaunchArgument('base_frame', default_value='base_link',
                               description='Frame for interactive markers and goal poses.'),
+        DeclareLaunchArgument('reactivate_topic', default_value='/reset',
+                              description='Topic to reactivate controller.'),
         DeclareLaunchArgument('marker_scale', default_value='0.2',
                               description='Interactive marker scale.'),
-        DeclareLaunchArgument('urdf_path',
+        DeclareLaunchArgument('follower_urdf_path',
                               default_value=PathJoinSubstitution([
                                   FindPackageShare('ffw_description'),
                                   'urdf',
@@ -25,12 +27,28 @@ def generate_launch_description():
                                   'ffw_sg2_follower.urdf'
                               ]),
                               description='Path to robot URDF file.'),
-        DeclareLaunchArgument('srdf_path',
+        DeclareLaunchArgument('follower_srdf_path',
                               default_value=PathJoinSubstitution([
                                   FindPackageShare('ffw_description'),
                                   'urdf',
                                   'ffw_sg2_rev1_follower',
                                   'ffw.srdf'
+                              ]),
+                              description='Path to robot SRDF file.'),
+        DeclareLaunchArgument('leader_urdf_path',
+                              default_value=PathJoinSubstitution([
+                                  FindPackageShare('ffw_description'),
+                                  'urdf',
+                                  'ffw_lg2_leader',
+                                  'ffw_lg2_leader.urdf'
+                              ]),
+                              description='Path to robot URDF file.'),
+        DeclareLaunchArgument('leader_srdf_path',
+                              default_value=PathJoinSubstitution([
+                                  FindPackageShare('ffw_description'),
+                                  'urdf',
+                                  'ffw_lg2_leader',
+                                  'ffw_lg2_leader.srdf'
                               ]),
                               description='Path to robot SRDF file.'),
         DeclareLaunchArgument('config_file',
@@ -46,24 +64,58 @@ def generate_launch_description():
     ]
 
     start_interactive_marker = LaunchConfiguration('start_interactive_marker')
-    urdf_path = LaunchConfiguration('urdf_path')
-    srdf_path = LaunchConfiguration('srdf_path')
+    follower_urdf_path = LaunchConfiguration('follower_urdf_path')
+    follower_srdf_path = LaunchConfiguration('follower_srdf_path')
+    leader_urdf_path = LaunchConfiguration('leader_urdf_path')
+    leader_srdf_path = LaunchConfiguration('leader_srdf_path')
     base_frame = LaunchConfiguration('base_frame')
+    reactivate_topic = LaunchConfiguration('reactivate_topic')
     marker_scale = LaunchConfiguration('marker_scale')
     config_file = LaunchConfiguration('config_file')
     controller_type = LaunchConfiguration('controller_type')
-    controller_node = PythonExpression([
+    controller_executable = PythonExpression([
         "'", controller_type, "_controller_node'"
     ])
 
-    controller_node = Node(
+    follower_controller_node = Node(
         package='motion_controller_ros',
-        executable=controller_node,
+        executable=controller_executable,
         parameters=[config_file, {
-            'urdf_path': urdf_path,
-            'srdf_path': srdf_path,
+            'urdf_path': follower_urdf_path,
+            'srdf_path': follower_srdf_path,
         }],
         output='screen',
+        condition=UnlessCondition(PythonExpression([
+            "'", controller_type, "' == 'leader'"
+        ])),
+    )
+
+    leader_controller_node = Node(
+        package='motion_controller_ros',
+        executable='leader_controller_node',
+        parameters=[config_file, {
+            'urdf_path': leader_urdf_path,
+            'srdf_path': leader_srdf_path,
+            'reactivate_topic': reactivate_topic,
+        }],
+        output='screen',
+        condition=IfCondition(PythonExpression([
+            "'", controller_type, "' == 'leader'"
+        ])),
+    )
+
+    follower_with_leader_node = Node(
+        package='motion_controller_ros',
+        executable='ai_worker_controller_node',
+        parameters=[config_file, {
+            'urdf_path': follower_urdf_path,
+            'srdf_path': follower_srdf_path,
+            'reactivate_topic': reactivate_topic,
+        }],
+        output='screen',
+        condition=IfCondition(PythonExpression([
+            "'", controller_type, "' == 'leader'"
+        ])),
     )
 
     reference_checker_node = Node(
@@ -71,8 +123,8 @@ def generate_launch_description():
         executable='reference_checker_node',
         parameters=[config_file],
         output='screen',
-        condition=UnlessCondition(PythonExpression([
-            "'", controller_type, "' == 'joint_space'"
+        condition=IfCondition(PythonExpression([
+            "'", controller_type, "' == 'ai_worker'"
         ])),
     )
 
@@ -89,7 +141,9 @@ def generate_launch_description():
     
     return LaunchDescription(
         declared_arguments + [
-            controller_node,
+            follower_controller_node,
+            leader_controller_node,
+            follower_with_leader_node,
             reference_checker_node,
             interactive_marker,
         ]

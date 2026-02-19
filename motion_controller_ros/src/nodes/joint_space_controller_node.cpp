@@ -37,7 +37,6 @@ namespace motion_controller_ros
         left_traj_topic_ = this->declare_parameter("left_traj_topic", std::string("/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"));
         right_traj_filtered_topic_ = this->declare_parameter("right_traj_filtered_topic", std::string("/leader/joint_trajectory_command_broadcaster_right/joint_trajectory_filtered"));
         left_traj_filtered_topic_ = this->declare_parameter("left_traj_filtered_topic", std::string("/leader/joint_trajectory_command_broadcaster_left/joint_trajectory_filtered"));
-        traj_frame_id_ = this->declare_parameter("traj_frame_id", std::string(""));
         right_gripper_joint_name_ = this->declare_parameter("right_gripper_joint", std::string("gripper_r_joint1"));
         left_gripper_joint_name_ = this->declare_parameter("left_gripper_joint", std::string("gripper_l_joint1"));
         command_timeout_ = this->declare_parameter("command_timeout", 0.1);
@@ -62,14 +61,11 @@ namespace motion_controller_ros
             left_traj_filtered_topic_, 10);
 
         try {
-            if (urdf_path_.empty() || srdf_path_.empty()) {
-                std::string package_path = ament_index_cpp::get_package_share_directory("ffw_description");
-                if (urdf_path_.empty()) {
-                    urdf_path_ = package_path + "/urdf/ffw_sg2_rev1_follower/ffw_sg2_follower.urdf";
-                }
-                if (srdf_path_.empty()) {
-                    srdf_path_ = package_path + "/urdf/ffw_sg2_rev1_follower/ffw.srdf";
-                }
+            if (urdf_path_.empty()) {
+                throw std::runtime_error("URDF path not provided.");
+            }
+            if (srdf_path_.empty()) {
+                throw std::runtime_error("SRDF path not provided.");
             }
             RCLCPP_INFO(this->get_logger(), "URDF path: %s", urdf_path_.c_str());
             RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
@@ -370,7 +366,7 @@ namespace motion_controller_ros
         const rclcpp::Duration& time_from_start) const
     {
         trajectory_msgs::msg::JointTrajectory traj_msg;
-        traj_msg.header.frame_id = traj_frame_id_;
+        traj_msg.header.frame_id = "";
         traj_msg.joint_names = arm_joint_names;
         traj_msg.joint_names.push_back(gripper_joint_name);
 

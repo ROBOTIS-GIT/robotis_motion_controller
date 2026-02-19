@@ -123,6 +123,16 @@ namespace kinematics
         return true;
     }
 
+    bool KinematicsSolver::setJointVelocityBoundsByIndex(const int idx, const double lower, const double upper)
+    {
+        if (idx < 0 || idx >= dof_) {
+            return false;
+        }
+        qdot_lb_[idx] = lower;
+        qdot_ub_[idx] = upper;
+        return true;
+    }
+
     bool KinematicsSolver::updateKinematics(const VectorXd& q, const VectorXd& qdot)
     {
         pinocchio::forwardKinematics(model_, data_, q, qdot);

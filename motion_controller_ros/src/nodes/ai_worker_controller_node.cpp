@@ -46,14 +46,14 @@ namespace motion_controller_ros
         joint_states_topic_ = this->declare_parameter("joint_states_topic", std::string("/joint_states"));
         right_traj_topic_ = this->declare_parameter("right_traj_topic", std::string("/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"));
         left_traj_topic_ = this->declare_parameter("left_traj_topic", std::string("/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"));
+        lift_topic_ = this->declare_parameter("lift_topic", std::string("/leader/joystick_controller_right/joint_trajectory"));
+        lift_vel_bound_ = this->declare_parameter("lift_vel_bound", 0.0);
         r_gripper_pose_topic_ = this->declare_parameter("r_gripper_pose_topic", std::string("/r_gripper_pose"));
         l_gripper_pose_topic_ = this->declare_parameter("l_gripper_pose_topic", std::string("/l_gripper_pose"));
         r_gripper_name_ = this->declare_parameter("r_gripper_name", std::string("arm_r_link7"));
         l_gripper_name_ = this->declare_parameter("l_gripper_name", std::string("arm_l_link7"));
         r_elbow_name_ = this->declare_parameter("r_elbow_name", std::string("arm_r_link4"));
         l_elbow_name_ = this->declare_parameter("l_elbow_name", std::string("arm_l_link4"));
-        base_frame_id_ = this->declare_parameter("base_frame_id", std::string("base_link"));
-        traj_frame_id_ = this->declare_parameter("traj_frame_id", std::string(""));
         right_gripper_joint_name_ = this->declare_parameter("right_gripper_joint", std::string("gripper_r_joint1"));
         left_gripper_joint_name_ = this->declare_parameter("left_gripper_joint", std::string("gripper_l_joint1"));
 
@@ -89,8 +89,8 @@ namespace motion_controller_ros
             std::bind(&AIWorkerController::referenceReactivateCallback, this, std::placeholders::_1));
 
         // Initialize publishers
-        // lift_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
-        //     LIFT_TRAJ_TOPIC, 10);
+        lift_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
+            lift_topic_, 10);
 
         arm_r_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(
             right_traj_topic_, 10);
@@ -106,14 +106,11 @@ namespace motion_controller_ros
 
         // Initialize motion controller
         try {
-            if (urdf_path_.empty() || srdf_path_.empty()) {
-                std::string package_path = ament_index_cpp::get_package_share_directory("ffw_description");
-                if (urdf_path_.empty()) {
-                    urdf_path_ = package_path + "/urdf/ffw_sg2_rev1_follower/ffw_sg2_follower.urdf";
-                }
-                if (srdf_path_.empty()) {
-                    srdf_path_ = package_path + "/urdf/ffw_sg2_rev1_follower/ffw.srdf";
-                }
+            if (urdf_path_.empty()) {
+                throw std::runtime_error("URDF path not provided.");
+            }
+            if (srdf_path_.empty()) {
+                throw std::runtime_error("SRDF path not provided.");
             }
             RCLCPP_INFO(this->get_logger(), "URDF path: %s", urdf_path_.c_str());
             RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
@@ -188,7 +185,8 @@ namespace motion_controller_ros
         
         left_arm_joints_.clear();
         right_arm_joints_.clear();
-        // lift_joint_.clear();
+        lift_joint_.clear();
+        lift_joint_index_ = -1;
         
         // Parse joint names
         for (const auto& joint_name : joint_names) {
@@ -197,15 +195,29 @@ namespace motion_controller_ros
             } else if (joint_name.find("arm_r_joint") != std::string::npos) {
                 right_arm_joints_.push_back(joint_name);
             } 
-            // else if (joint_name.find("lift_joint") != std::string::npos) {
-            //     lift_joint_ = joint_name;
-            // }
+            else if (joint_name.find("lift_joint") != std::string::npos) {
+                lift_joint_ = joint_name;
+            }
         }
         
         // Sort to ensure correct ordering
         std::sort(left_arm_joints_.begin(), left_arm_joints_.end());
         std::sort(right_arm_joints_.begin(), right_arm_joints_.end());
-        
+
+        // Treat lift as a passive joint for the controller
+        if (!lift_joint_.empty()) {
+            auto lift_it = model_joint_index_map_.find(lift_joint_);
+            if (lift_it != model_joint_index_map_.end()) {
+                lift_joint_index_ = lift_it->second;
+                const bool locked = kinematics_solver_->setJointVelocityBoundsByIndex(lift_joint_index_, -lift_vel_bound_, lift_vel_bound_);
+                if (!locked) {
+                    RCLCPP_WARN(this->get_logger(), "Failed to set lift joint velocity bounds");
+                    lift_joint_index_ = -1;
+                }
+            } else {
+                RCLCPP_WARN(this->get_logger(), "Lift joint '%s' not found in model index map", lift_joint_.c_str());
+            }
+        }
         
         // Log joint names
         std::string left_str, right_str;
@@ -213,9 +225,7 @@ namespace motion_controller_ros
         for (const auto& j : right_arm_joints_) right_str += j + " ";
         RCLCPP_DEBUG(this->get_logger(), "Left arm joints: %s", left_str.c_str());
         RCLCPP_DEBUG(this->get_logger(), "Right arm joints: %s", right_str.c_str());
-        // if (!lift_joint_.empty()) {
-        //     RCLCPP_DEBUG(this->get_logger(), "Lift joint: %s", lift_joint_.c_str());
-        // }
+        RCLCPP_DEBUG(this->get_logger(), "Lift joint: %s", lift_joint_.c_str());
     }
 
     void AIWorkerController::rightGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
@@ -356,8 +366,11 @@ namespace motion_controller_ros
         try {
             // kinematics_solver_->updateState(q_, qdot_);
             // Use previously commanded joint goals as feedback state
-            const VectorXd q_feedback =
+            VectorXd q_feedback =
                 (q_desired_.size() == q_.size()) ? q_desired_ : q_;
+
+            // If lift is commanded by another node, use measured lift state for internal model consistency.
+            q_feedback[lift_joint_index_] = q_[lift_joint_index_];
 
             // Control loop is executing - update kinematics solver with feedback state
             kinematics_solver_->updateState(q_feedback, qdot_);
@@ -510,13 +523,6 @@ namespace motion_controller_ros
                     right_arm_indices.push_back(it->second);
                 }
             }
-            
-            // if (!lift_joint_.empty()) {
-            //     auto it = model_joint_index_map_.find(lift_joint_);
-            //     if (it != model_joint_index_map_.end()) {
-            //         lift_indices.push_back(it->second);
-            //     }
-            // }
 
             // Publish left arm trajectory (include gripper joint with position 0)
             if (!left_arm_indices.empty()) {
@@ -532,12 +538,17 @@ namespace motion_controller_ros
                 arm_r_pub_->publish(traj_right);
             }
 
-            // // Publish lift trajectory
-            // if (!lift_indices.empty() && !lift_joint_.empty()) {
-            //     std::vector<std::string> lift_names = {lift_joint_};
-            //     auto traj_lift = createTrajectoryMsg(lift_names, q_desired, lift_indices);
-            //     lift_pub_->publish(traj_lift);
-            // }
+            // Publish lift trajectory
+            if (lift_joint_index_ >= 0 && !lift_joint_.empty()) {
+                if (lift_joint_index_ < static_cast<int>(q_desired.size())) {
+                    auto traj_lift = createLiftTrajectoryMsg(lift_joint_, q_desired[lift_joint_index_]);
+                    if (lift_vel_bound_ != 0.0) {
+                        lift_pub_->publish(traj_lift);
+                    }
+                } else {
+                    RCLCPP_WARN(this->get_logger(), "Lift index out of range, skipping lift publish");
+                }
+            }
 
         } catch (const std::exception& e) {
             RCLCPP_ERROR(this->get_logger(), "Error publishing trajectory: %s", e.what());
@@ -551,7 +562,7 @@ namespace motion_controller_ros
         const std::string& gripper_joint_name) const
     {
         trajectory_msgs::msg::JointTrajectory traj_msg;
-        traj_msg.header.frame_id = traj_frame_id_;
+        traj_msg.header.frame_id = "";
         
         // Add arm joint names
         traj_msg.joint_names = arm_joint_names;
@@ -576,12 +587,28 @@ namespace motion_controller_ros
         return traj_msg;
     }
 
+    trajectory_msgs::msg::JointTrajectory AIWorkerController::createLiftTrajectoryMsg(
+        std::string lift_joint_name,
+        const double position) const
+    {
+        trajectory_msgs::msg::JointTrajectory traj_msg;
+        traj_msg.header.frame_id = "";
+        
+        traj_msg.joint_names = {lift_joint_name};
+
+        trajectory_msgs::msg::JointTrajectoryPoint point;
+        point.time_from_start = rclcpp::Duration::from_seconds(trajectory_time_);
+        point.positions = {position};
+        traj_msg.points.push_back(point);
+        return traj_msg;
+    }
+
     void AIWorkerController::publishGripperPose(const Affine3d& r_gripper_pose, const Affine3d& l_gripper_pose)
     {
         if (r_gripper_pose_pub_) {
             geometry_msgs::msg::PoseStamped r_gripper_pose_msg;
             r_gripper_pose_msg.header.stamp = this->now();
-            r_gripper_pose_msg.header.frame_id = base_frame_id_;
+            r_gripper_pose_msg.header.frame_id = "base_link";
             r_gripper_pose_msg.pose.position.x = r_gripper_pose.translation().x();
             r_gripper_pose_msg.pose.position.y = r_gripper_pose.translation().y();
             r_gripper_pose_msg.pose.position.z = r_gripper_pose.translation().z();
@@ -595,7 +622,7 @@ namespace motion_controller_ros
         if (l_gripper_pose_pub_) {
             geometry_msgs::msg::PoseStamped l_gripper_pose_msg;
             l_gripper_pose_msg.header.stamp = this->now();
-            l_gripper_pose_msg.header.frame_id = base_frame_id_;
+            l_gripper_pose_msg.header.frame_id = "base_link";
             l_gripper_pose_msg.pose.position.x = l_gripper_pose.translation().x();
             l_gripper_pose_msg.pose.position.y = l_gripper_pose.translation().y();
             l_gripper_pose_msg.pose.position.z = l_gripper_pose.translation().z();

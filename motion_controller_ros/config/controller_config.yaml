@@ -14,21 +14,21 @@ ai_worker_controller:
     slack_penalty: 1000.0
     cbf_alpha: 50.0
     reactivate_topic: "/reset"  
+    joint_states_topic: "/joint_states"
+    right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
+    left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
+    lift_topic: "/leader/joystick_controller_right/joint_trajectory"
+    lift_vel_bound: 0.0
     r_goal_pose_topic: "/r_goal_pose"
     l_goal_pose_topic: "/l_goal_pose"
     r_elbow_pose_topic: "/r_elbow_pose"
     l_elbow_pose_topic: "/l_elbow_pose"
-    joint_states_topic: "/joint_states"
-    right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
-    left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
     r_gripper_pose_topic: "/r_gripper_pose"
     l_gripper_pose_topic: "/l_gripper_pose"
     r_gripper_name: "arm_r_link7"
     l_gripper_name: "arm_l_link7"
     r_elbow_name: "arm_r_link4"
     l_elbow_name: "arm_l_link4"
-    base_frame_id: "base_link"
-    traj_frame_id: ""
     right_gripper_joint: "gripper_r_joint1"
     left_gripper_joint: "gripper_l_joint1"
 
@@ -48,8 +48,25 @@ joint_space_controller:
     left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/raw_joint_trajectory"
     right_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
     left_traj_filtered_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
-    base_frame_id: "base_link"
-    traj_frame_id: ""
+
+leader_controller:
+  ros__parameters:
+    control_frequency: 100.0
+    joint_states_topic: "/joint_states" 
+    right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/raw_joint_trajectory"
+    left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/raw_joint_trajectory"
+    command_timeout: 0.1
+    r_goal_pose_topic: "/r_goal_pose"
+    l_goal_pose_topic: "/l_goal_pose"
+    r_elbow_pose_topic: "/r_elbow_pose"
+    l_elbow_pose_topic: "/l_elbow_pose"
+    base_frame_id : "base_link"
+    r_gripper_name: "arm_r_link7"
+    l_gripper_name: "arm_l_link7"
+    r_elbow_name: "arm_r_link4"
+    l_elbow_name: "arm_l_link4"
+    lift_joint_name: "lift_joint"
+    model_lift_joint_name: "joint"
 
 reference_checker:
   ros__parameters:

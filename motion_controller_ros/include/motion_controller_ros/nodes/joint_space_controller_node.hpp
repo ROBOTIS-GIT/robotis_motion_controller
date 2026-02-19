@@ -51,8 +51,6 @@ namespace motion_controller_ros
         std::string left_traj_topic_;
         std::string right_traj_filtered_topic_;
         std::string left_traj_filtered_topic_;
-        std::string base_frame_id_;
-        std::string traj_frame_id_;
         std::string right_gripper_joint_name_;
         std::string left_gripper_joint_name_;
         std::string urdf_path_;
