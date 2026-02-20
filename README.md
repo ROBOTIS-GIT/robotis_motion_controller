@@ -32,3 +32,15 @@ echo "export LD_LIBRARY_PATH=/root/osqp-eigen_install/lib:$LD_LIBRARY_PATH" >> ~
 sudo apt update
 sudo apt install ros-jazzy-pinocchio
 ```
+- Build repository by source
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/ROBOTIS-GIT/motion_controller.git
+cd ~/ros2_ws
+colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+source install/setup.bash
+```
+- Run motion controller(example)
+```bash
+ros2 launch motion_controller_ros controller.launch.py controller_type:=ai_worker start_interactive_marker:=true
+```
