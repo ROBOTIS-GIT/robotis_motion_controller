@@ -1,6 +1,69 @@
 # ROBOTIS Motion Controller
 
-This repository contains motion controller packages for the ROBOTIS Physical AI lineup. It provides a QP-based inverse kinematics controller (`motion_controller_core`) and ROS 2 wrapper files (`motion_controller_ros`) that run controllers for the AI Worker model (support for additional models is on the roadmap), using Pinocchio for kinematics and OSQP for optimization.
+This repository contains motion controller packages for the ROBOTIS Physical AI lineup.
+
+## Repository Structure
+
+```text
+├── motion_controller_core/
+│   ├── include/motion_controller_core/
+│   │   ├── common/
+│   │   │   └── ...
+│   │   ├── controllers/
+│   │   │   └── ...
+│   │   ├── kinematics/
+│   │   │   └── ...
+│   │   ├── optimization/
+│   │   │   └── ...
+│   │   └── retargeting/
+│   │       └── ...
+│   └── src/
+│       ├── controllers/
+│       │   └── ...
+│       ├── kinematics/
+│       │   └── ...
+│       └── retargeting/
+│           └── ...
+├── CMakeLists.txt
+├── package.xml
+│
+├── motion_controller_ros/
+│   ├── config/
+│   │   └── ...
+│   ├── include/motion_controller_ros/
+│   │   ├── nodes/
+│   │   │   └── ...
+│   │   └── utils/
+│   │       └── ...
+│   ├── launch/
+│   │   └── ...
+│   ├── models/
+│   │   └── ...
+│   └── src/
+│       ├── nodes/
+│       │   └── ...
+│       └── utils/
+│           └── ...
+├── CMakeLists.txt
+└── package.xml
+```
+### Directory Description
+| Directory | Description |
+|-----------|-------------|
+| `motion_controller_core/` | Core package containing kinematics solver & motion control library |
+| `motion_controller_core/include/motion_controller_core/common/` | Common headers containing shared types and utility functions |
+| `motion_controller_core/include/motion_controller_core/optimization/` | QP definitions and solver interfaces |
+| `motion_controller_core/src/controllers/` | Controller implementations |
+| `motion_controller_core/src/kinematics/` | Kinematics solver implementation |
+| `motion_controller_core/src/retargeting/` | Retargeting module (placeholder, not yet implemented) |
+
+| Directory | Description |
+|-----------|-------------|
+| `motion_controller_ros/` | ROS 2 package containing controller nodes, launch files, configs, and robot model assets |
+| `motion_controller_ros/launch/` | Launch files for running the controller nodes |
+| `motion_controller_ros/models/` | URDF/SRDF robot models used by the controller |
+| `motion_controller_ros/src/nodes/` | ROS 2 node executables for each controller type |
+| `motion_controller_ros/src/utils/` | Utility nodes |
 
 ## Install (from source)
 
