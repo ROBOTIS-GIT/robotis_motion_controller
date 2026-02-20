@@ -1,0 +1,6 @@
+numpy>=1.21.0
+pin>=3.8.0
+autograd
+nlopt
+# Note: pin can be installed via conda(pip install pinocchio is incorrect):
+# conda install -c conda-forge pinocchio>=3.8.0
