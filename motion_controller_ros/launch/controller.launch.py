@@ -21,33 +21,33 @@ def generate_launch_description():
                               description='Interactive marker scale.'),
         DeclareLaunchArgument('follower_urdf_path',
                               default_value=PathJoinSubstitution([
-                                  FindPackageShare('ffw_description'),
-                                  'urdf',
-                                  'ffw_sg2_rev1_follower',
+                                  FindPackageShare('motion_controller_ros'),
+                                  'models',
+                                  'ai_worker',
                                   'ffw_sg2_follower.urdf'
                               ]),
                               description='Path to robot URDF file.'),
         DeclareLaunchArgument('follower_srdf_path',
                               default_value=PathJoinSubstitution([
-                                  FindPackageShare('ffw_description'),
-                                  'urdf',
-                                  'ffw_sg2_rev1_follower',
-                                  'ffw.srdf'
+                                  FindPackageShare('motion_controller_ros'),
+                                  'models',
+                                  'ai_worker',
+                                  'ffw_sg2_follower.srdf'
                               ]),
                               description='Path to robot SRDF file.'),
         DeclareLaunchArgument('leader_urdf_path',
                               default_value=PathJoinSubstitution([
-                                  FindPackageShare('ffw_description'),
-                                  'urdf',
-                                  'ffw_lg2_leader',
+                                  FindPackageShare('motion_controller_ros'),
+                                  'models',
+                                  'leader',
                                   'ffw_lg2_leader.urdf'
                               ]),
                               description='Path to robot URDF file.'),
         DeclareLaunchArgument('leader_srdf_path',
                               default_value=PathJoinSubstitution([
-                                  FindPackageShare('ffw_description'),
-                                  'urdf',
-                                  'ffw_lg2_leader',
+                                  FindPackageShare('motion_controller_ros'),
+                                  'models',
+                                  'leader',
                                   'ffw_lg2_leader.srdf'
                               ]),
                               description='Path to robot SRDF file.'),
