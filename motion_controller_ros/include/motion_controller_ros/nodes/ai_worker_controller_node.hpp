@@ -5,6 +5,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
@@ -64,6 +65,9 @@ namespace motion_controller_ros
         std::string right_raw_traj_topic_;
         std::string left_raw_traj_topic_;
         double raw_traj_timeout_;
+        std::string left_trigger_topic_;
+        std::string right_trigger_topic_;
+        double trigger_timeout_;
         std::string lift_topic_;
         double lift_vel_bound_;
         std::string r_gripper_pose_topic_;
@@ -85,6 +89,8 @@ namespace motion_controller_ros
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
         rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr right_raw_traj_sub_;
         rclcpp::Subscription<trajectory_msgs::msg::JointTrajectory>::SharedPtr left_raw_traj_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr left_trigger_sub_;
+        rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr right_trigger_sub_;
         rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ref_divergence_sub_;
 
         // Services
@@ -148,6 +154,12 @@ namespace motion_controller_ros
         rclcpp::Time last_right_raw_traj_time_;
         rclcpp::Time last_left_raw_traj_time_;
 
+        // VR trigger as gripper fallback (when raw trajectory has no gripper or timed out)
+        double left_trigger_gripper_value_ = 0.0;
+        double right_trigger_gripper_value_ = 0.0;
+        rclcpp::Time last_left_trigger_time_;
+        rclcpp::Time last_right_trigger_time_;
+
         // Control timing
         double dt_;  // nominal time step in seconds
         rclcpp::Time last_control_time_;
@@ -170,6 +182,8 @@ namespace motion_controller_ros
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
         void rightRawTrajectoryCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg);
         void leftRawTrajectoryCallback(const trajectory_msgs::msg::JointTrajectory::SharedPtr msg);
+        void leftTriggerCallback(const std_msgs::msg::Float32::SharedPtr msg);
+        void rightTriggerCallback(const std_msgs::msg::Float32::SharedPtr msg);
         void referenceDivergenceCallback(const std_msgs::msg::Bool::SharedPtr msg);
         void reactivateServiceCallback(
             const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
