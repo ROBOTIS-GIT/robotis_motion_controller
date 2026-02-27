@@ -1,9 +1,8 @@
 """High-level retargeting interface for ROBOTIS Hand using DexPilot algorithm."""
 
-import os
-
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
