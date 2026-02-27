@@ -24,6 +24,7 @@ def generate_launch_description():
                                   FindPackageShare('motion_controller_ros'),
                                   'models',
                                   'ai_worker',
+                                #   'ffw_sg2_follower_wholebody.urdf'
                                   'ffw_sg2_follower.urdf'
                               ]),
                               description='Path to robot URDF file.'),

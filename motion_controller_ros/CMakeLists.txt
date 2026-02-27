@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -63,6 +64,10 @@ add_executable(ai_worker_controller_node
   src/nodes/ai_worker_controller_node.cpp
 )
 
+add_executable(ai_worker_wholebody_controller_node 
+  src/nodes/ai_worker_wholebody_controller_node.cpp
+)
+
 add_executable(joint_space_controller_node 
   src/nodes/joint_space_controller_node.cpp
 )
@@ -88,6 +93,12 @@ target_include_directories(ai_worker_controller_node PRIVATE
   ${MOTION_CONTROLLER_CORE_INCLUDE_DIR}
 )
 
+target_include_directories(ai_worker_wholebody_controller_node PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${EIGEN3_INCLUDE_DIR}
+  ${MOTION_CONTROLLER_CORE_INCLUDE_DIR}
+)
+
 target_include_directories(joint_space_controller_node PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${EIGEN3_INCLUDE_DIR}
@@ -106,6 +117,16 @@ ament_target_dependencies(ai_worker_controller_node
   std_msgs
   std_srvs
   geometry_msgs
+  sensor_msgs
+  trajectory_msgs
+  ament_index_cpp
+)
+
+ament_target_dependencies(ai_worker_wholebody_controller_node
+  rclcpp
+  std_msgs
+  geometry_msgs
+  nav_msgs
   sensor_msgs
   trajectory_msgs
   ament_index_cpp
@@ -150,6 +171,12 @@ target_link_libraries(ai_worker_controller_node
   OsqpEigen::OsqpEigen
 )
 
+target_link_libraries(ai_worker_wholebody_controller_node
+  Eigen3::Eigen
+  pinocchio::pinocchio
+  OsqpEigen::OsqpEigen
+)
+
 target_link_libraries(joint_space_controller_node
   Eigen3::Eigen
   pinocchio::pinocchio
@@ -165,17 +192,23 @@ target_link_libraries(leader_controller_node
 # Link motion_controller_core
 if(motion_controller_core_FOUND)
   target_link_libraries(ai_worker_controller_node motion_controller_core::motion_controller_core)
+  target_link_libraries(ai_worker_wholebody_controller_node motion_controller_core::motion_controller_core)
   target_link_libraries(joint_space_controller_node motion_controller_core::motion_controller_core)
   target_link_libraries(leader_controller_node motion_controller_core::motion_controller_core)
 else()
   # Link with full path for fallback
   target_link_libraries(ai_worker_controller_node ${MOTION_CONTROLLER_CORE_LIB})
+  target_link_libraries(ai_worker_wholebody_controller_node ${MOTION_CONTROLLER_CORE_LIB})
   target_link_libraries(joint_space_controller_node ${MOTION_CONTROLLER_CORE_LIB})
   target_link_libraries(leader_controller_node ${MOTION_CONTROLLER_CORE_LIB})
 endif()
 
 # Install executable
 install(TARGETS ai_worker_controller_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS ai_worker_wholebody_controller_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
