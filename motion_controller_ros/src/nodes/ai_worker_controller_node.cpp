@@ -59,6 +59,10 @@ namespace motion_controller_ros
         right_trigger_topic_ = this->declare_parameter(
             "right_trigger_topic", std::string("/vr_controller/right_trigger"));
         trigger_timeout_ = this->declare_parameter("trigger_timeout", 0.5);
+        left_trigger_gripper_min_ = this->declare_parameter("left_trigger_gripper_min", 0.0);
+        left_trigger_gripper_max_ = this->declare_parameter("left_trigger_gripper_max", 1.3);
+        right_trigger_gripper_min_ = this->declare_parameter("right_trigger_gripper_min", 0.0);
+        right_trigger_gripper_max_ = this->declare_parameter("right_trigger_gripper_max", 1.3);
         lift_topic_ = this->declare_parameter("lift_topic", std::string("/leader/joystick_controller_right/joint_trajectory"));
         lift_vel_bound_ = this->declare_parameter("lift_vel_bound", 0.0);
         r_gripper_pose_topic_ = this->declare_parameter("r_gripper_pose_topic", std::string("/r_gripper_pose"));
@@ -364,7 +368,8 @@ namespace motion_controller_ros
         if (!msg || !std::isfinite(msg->data)) {
             return;
         }
-        left_trigger_gripper_value_ = static_cast<double>(msg->data);
+        double t = std::max(0.0, std::min(1.0, static_cast<double>(msg->data)));
+        left_trigger_gripper_value_ = left_trigger_gripper_min_ + t * (left_trigger_gripper_max_ - left_trigger_gripper_min_);
         last_left_trigger_time_ = this->now();
     }
 
@@ -373,7 +378,8 @@ namespace motion_controller_ros
         if (!msg || !std::isfinite(msg->data)) {
             return;
         }
-        right_trigger_gripper_value_ = static_cast<double>(msg->data);
+        double t = std::max(0.0, std::min(1.0, static_cast<double>(msg->data)));
+        right_trigger_gripper_value_ = right_trigger_gripper_min_ + t * (right_trigger_gripper_max_ - right_trigger_gripper_min_);
         last_right_trigger_time_ = this->now();
     }
 

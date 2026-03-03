@@ -68,6 +68,11 @@ namespace motion_controller_ros
         std::string left_trigger_topic_;
         std::string right_trigger_topic_;
         double trigger_timeout_;
+        // VR trigger -> gripper joint mapping (same idea as broadcaster offsets: trigger [0,1] -> joint [min,max])
+        double left_trigger_gripper_min_;
+        double left_trigger_gripper_max_;
+        double right_trigger_gripper_min_;
+        double right_trigger_gripper_max_;
         std::string lift_topic_;
         double lift_vel_bound_;
         std::string r_gripper_pose_topic_;

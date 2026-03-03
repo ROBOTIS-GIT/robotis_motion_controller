@@ -35,6 +35,11 @@ ai_worker_controller:
     left_trigger_topic: "/vr_controller/left_trigger"
     right_trigger_topic: "/vr_controller/right_trigger"
     trigger_timeout: 0.5
+    # Map trigger [0, 1] to gripper joint position [min, max] (same idea as broadcaster offsets)
+    left_trigger_gripper_min: 0.0   # gripper open when trigger = 0
+    left_trigger_gripper_max: 1.3  # gripper closed when trigger = 1 (tune to match hardware)
+    right_trigger_gripper_min: 0.0
+    right_trigger_gripper_max: 1.3
     startup_ref_pos_threshold: 0.3
     startup_ref_ori_threshold_deg: 120.0
 
