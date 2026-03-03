@@ -133,5 +133,6 @@ ros2 launch motion_controller_ros controller.launch.py controller_type:=ai_worke
 
 You can also switch controllers via `controller_type`:
 
+- `controller_type:=ai_worker_wholebody` (runs `ai_worker_wholebody_controller_node`)
 - `controller_type:=joint_space` (runs `joint_space_controller_node`)
 - `controller_type:=leader` (runs `leader_controller_node` and also starts the follower controller for leader/follower use)
