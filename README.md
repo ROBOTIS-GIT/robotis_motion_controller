@@ -37,13 +37,21 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 │   │       └── ...
 │   ├── launch/
 │   │   └── ...
-│   ├── models/
-│   │   └── ...
 │   └── src/
 │       ├── nodes/
 │       │   └── ...
 │       └── utils/
 │           └── ...
+├── CMakeLists.txt
+├── package.xml
+│
+├── motion_controller_models/
+│   ├── launch/
+│   │   └── ...
+│   ├── models/
+│   │   └── ...
+│   ├── CMakeLists.txt
+│   └── package.xml
 ├── CMakeLists.txt
 └── package.xml
 ```
@@ -59,11 +67,16 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 
 | Directory | Description |
 |-----------|-------------|
-| `motion_controller_ros/` | ROS 2 package containing controller nodes, launch files, configs, and robot model assets |
+| `motion_controller_ros/` | ROS 2 package containing controller nodes, launch files, and configs |
 | `motion_controller_ros/launch/` | Launch files for running the controller nodes |
-| `motion_controller_ros/models/` | URDF/SRDF robot models used by the controller |
 | `motion_controller_ros/src/nodes/` | ROS 2 node executables for each controller type |
 | `motion_controller_ros/src/utils/` | Utility nodes |
+
+| Directory | Description |
+|-----------|-------------|
+| `motion_controller_models/` | Robot model descriptions package |
+| `motion_controller_models/launch/` | Launch files for visualizing robot models |
+| `motion_controller_models/models/` | URDF/SRDF robot models used by the controller |
 
 ## Install (from source)
 
