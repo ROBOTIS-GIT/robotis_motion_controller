@@ -1,3 +1,6 @@
+import os
+from ament_index_python.packages import get_package_share_directory
+
 import time
 import numpy as np
 
@@ -22,8 +25,25 @@ class RetargetingTeleop(Node):
     def __init__(self):
         super().__init__('retargeting_teleop')
 
-        self.right_retargeter = ROBOTISHandRetargeter(hand_side="right")
-        self.left_retargeter = ROBOTISHandRetargeter(hand_side="left")
+        # Get the path to the models package
+        models_share_dir = get_package_share_directory('motion_controller_models')
+
+        right_urdf_path = os.path.join(
+            models_share_dir, 
+            'models', 
+            'hx5_d20', 
+            'hx5_d20_right.urdf'
+        )
+
+        left_urdf_path = os.path.join(
+            models_share_dir, 
+            'models', 
+            'hx5_d20', 
+            'hx5_d20_left.urdf'
+        )
+
+        self.right_retargeter = ROBOTISHandRetargeter(path_to_urdf=right_urdf_path, hand_side="right")
+        self.left_retargeter = ROBOTISHandRetargeter(path_to_urdf=left_urdf_path, hand_side="left")
 
         self.left_joint_names = [
             "finger_l_joint1", "finger_l_joint2", "finger_l_joint3", "finger_l_joint4",

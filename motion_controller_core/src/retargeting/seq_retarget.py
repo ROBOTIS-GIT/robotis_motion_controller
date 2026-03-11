@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+# from pathlib import Path
 
 import numpy as np
 
@@ -12,7 +12,7 @@ from retargeting.optimizer import DexPilotOptimizer
 
 
 # Package root for URDF path resolution
-_PACKAGE_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# _PACKAGE_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 LOW_PASS_ALPHA = 0.5  # Low-pass filter alpha (smaller = smoother but more latency)
 
@@ -31,11 +31,14 @@ class RetargetingResult:
 class ROBOTISHandRetargeter:
     """Retargeter for ROBOTIS Hand using DexPilot algorithm."""
 
-    def __init__(self, hand_side: str = "right"):
+    def __init__(self,
+                 path_to_urdf: str,
+                 hand_side: str = "right"):
         """
         Initialize retargeter for specified hand.
 
         Args:
+            urdf_path
             hand_side: "right" or "left"
         """
         self.hand_side = hand_side.lower()
@@ -62,7 +65,8 @@ class ROBOTISHandRetargeter:
                 ]
 
         # Build URDF path (from package directory)
-        urdf_path = (_PACKAGE_ROOT / f"motion_controller_models/models/hx5_d20/hx5_d20_{self.hand_side}.urdf").resolve()
+        # urdf_path = (_PACKAGE_ROOT / f"motion_controller_models/models/hx5_d20/hx5_d20_{self.hand_side}.urdf").resolve()
+        urdf_path = path_to_urdf
         if not urdf_path.exists():
             raise ValueError(f"URDF path {urdf_path} does not exist")
 
