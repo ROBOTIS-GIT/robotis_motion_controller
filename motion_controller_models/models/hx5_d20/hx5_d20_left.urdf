@@ -2,13 +2,13 @@
 <robot name="hx5_d20_left">
    <link name="hx5_d20_left_base">
       <visual>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -32,13 +32,13 @@
    </joint>
    <link name="finger_l_link1">
       <visual>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -90,13 +90,13 @@
    </joint>
    <link name="finger_l_link3">
       <visual>
-         <origin xyz="0 0 0" rpy="0 0 0" 
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
-         <origin xyz="0 0 0" rpy="0 0 0" 
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -119,13 +119,13 @@
    </joint>
    <link name="finger_l_link4">
       <visual>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
-         <origin xyz="0 0 0" rpy="0 0 0" /
+         <origin xyz="0 0 0" rpy="0 0 0" />
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>

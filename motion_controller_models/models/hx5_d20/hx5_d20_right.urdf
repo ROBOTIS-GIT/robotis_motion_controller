@@ -3,13 +3,13 @@
    <link name="hx5_d20_right_base">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </collision>
@@ -33,13 +33,13 @@
    <link name="finger_r_link1">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </collision>
@@ -91,13 +91,13 @@
    <link name="finger_r_link3">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         aterial name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         aterial name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </collision>
@@ -120,13 +120,13 @@
    <link name="finger_r_link4">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
-         material name="grey">
+         <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </collision>
