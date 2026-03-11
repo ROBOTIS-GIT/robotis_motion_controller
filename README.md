@@ -172,14 +172,17 @@ When `controller_type:=omx` and `start_interactive_marker:=true`, `omx_controlle
 Example `movel` command:
 
 ```bash
-ros2 topic pub --once /omx_movel_controller/movel geometry_msgs/msg/PoseStamped "{
+ros2 topic pub --once /omx_movel_controller/movel motion_controller_msgs/msg/MoveL "{
   pose: {
-    position: {x: 0.20, y: 0.00, z: 0.18},
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-  }
+    pose: {
+      position: {x: 0.20, y: 0.00, z: 0.18},
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+    }
+  },
+  time_from_start: {sec: 3, nanosec: 0}
 }"
 ```
-The default `movel` interpolation duration is 3 seconds and can be configured in the YAML file.
+`movel` interpolation duration is supplied per command via `time_from_start`.
 
 Example `movej` command:
 
@@ -214,14 +217,17 @@ When `controller_type:=omy` and `start_interactive_marker:=true`, `omy_controlle
 Example `movel` command:
 
 ```bash
-ros2 topic pub --once /omy_movel_controller/movel geometry_msgs/msg/PoseStamped "{
+ros2 topic pub --once /omy_movel_controller/movel motion_controller_msgs/msg/MoveL "{
   pose: {
-    position: {x: 0.30, y: -0.20, z: 0.5},
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-  }
+    pose: {
+      position: {x: 0.30, y: -0.20, z: 0.5},
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+    }
+  },
+  time_from_start: {sec: 3, nanosec: 0}
 }"
 ```
-The default `movel` interpolation duration is 3 seconds and can be configured in the YAML file.
+`movel` interpolation duration is supplied per command via `time_from_start`.
 
 Example `movej` command:
 
