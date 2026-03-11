@@ -9,7 +9,7 @@ from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from motion_controller_msgs.msg import HandJoints
 
-from retargeting.retarget import ROBOTISHandRetargeter
+from retargeting.seq_retarget import ROBOTISHandRetargeter
 
 # Create a profile that prioritizes speed over reliability
 qos_best_effort = QoSProfile(

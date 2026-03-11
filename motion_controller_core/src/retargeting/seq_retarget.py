@@ -2,26 +2,23 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 
-from retargeting.robot import RobotWrapper
-from retargeting.opt import DexPilotOptimizer, LPFilter
+from retargeting.robot_wrapper import RobotWrapper
+from retargeting.optimizer import DexPilotOptimizer
 
 
 # Package root for URDF path resolution
-current_dir = Path(__file__).resolve().parent
-package_root = current_dir.parent.parent
+_PACKAGE_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
-LOW_PASS_ALPHA = 0.9  # Low-pass filter alpha (smaller = smoother but more latency)
+LOW_PASS_ALPHA = 0.5  # Low-pass filter alpha (smaller = smoother but more latency)
 
 # MediaPipe landmark indices: wrist=0, thumb_tip=4, index_tip=8, middle_tip=12, ring_tip=16, pinky_tip=20
 MP_WRIST_IDX = 0
 MP_FINGER_TIP_INDICES = [4, 8, 12, 16, 20]  # Thumb to Pinky tip landmarks
-
 
 @dataclass
 class RetargetingResult:
@@ -65,39 +62,36 @@ class ROBOTISHandRetargeter:
                 ]
 
         # Build URDF path (from package directory)
-        urdf_path = package_root / 'ai_worker' / 'ffw_description' / 'urdf' / 'common' / 'hx5_d20' / f'hx5_d20_{self.hand_side}.urdf'
+        urdf_path = (_PACKAGE_ROOT / f"motion_controller_models/models/hx5_d20/hx5_d20_{self.hand_side}.urdf").resolve()
         if not urdf_path.exists():
             raise ValueError(f"URDF path {urdf_path} does not exist")
 
         # Load robot model
         robot = RobotWrapper(str(urdf_path))
-
-        # Store robot wrapper for later use
         self.robot = robot
-        
+
         # Compute robot finger lengths at neutral position (used for scaling)
         self.robot_finger_lengths = self._compute_robot_finger_lengths(robot)
-        
+
         # Calibration state: will be set on first retarget call
         self.is_calibrated = False
         self.finger_scaling = np.ones(5, dtype=np.float32)  # Default 1:1 scaling
-        
-        # Build optimizer (scaling will be updated after calibration)
+
+        # Build optimizer (scaling will be updated after calibration) and filter
         self.optimizer = DexPilotOptimizer(
             robot,
             robot.dof_joint_names,
             finger_tip_link_names=self.hx_finger_tip_link_names,
             wrist_link_name=self.hx_wrist_link_name,
             finger_scaling=self.finger_scaling.tolist(),
+            hand_side=self.hand_side,
         )
+        self.filter = LPFilter(LOW_PASS_ALPHA)
 
         # Joint limits (always enabled for ROBOTIS Hand)
         joint_limits = robot.joint_limits[self.optimizer.idx_pin2target]
         self.optimizer.set_joint_limit(joint_limits)
         self.joint_limits = joint_limits
-
-        # Store optimizer and filter
-        self.filter = LPFilter(LOW_PASS_ALPHA)
 
         # Initialize last joint positions for warm start
         self.last_qpos = joint_limits.mean(1).astype(np.float32)
@@ -161,10 +155,10 @@ class ROBOTISHandRetargeter:
 
     def _compute_human_finger_lengths(self, mediapipe_pose: np.ndarray) -> np.ndarray:
         """Compute human wrist-to-fingertip distances from MediaPipe landmarks.
-        
+
         Args:
             mediapipe_pose: MediaPipe hand landmarks (21, 3)
-            
+
         Returns:
             np.ndarray: Array of 5 finger lengths (thumb to pinky)
         """
@@ -175,42 +169,23 @@ class ROBOTISHandRetargeter:
 
     def _calibrate_scaling(self, mediapipe_pose: np.ndarray):
         """Calibrate finger scaling based on human hand size.
-        
+
         Computes scaling factors as human_length / robot_length so that
         the robot hand targets are scaled down to match human hand proportions.
         """
         human_lengths = self._compute_human_finger_lengths(mediapipe_pose)
-        
+
         # Scaling = human / robot (this scales robot targets down to human size)
         self.finger_scaling = human_lengths / (self.robot_finger_lengths + 1e-6)
-        
+
         # Update optimizer's scaling
         self.optimizer.finger_scaling = self.finger_scaling
-        self.optimizer.vector_scaling = self.optimizer._build_vector_scaling()
-        
+        self.optimizer.vector_scaling = self.optimizer.build_vector_scaling()
+
         self.is_calibrated = True
         print(f"[Retargeter] Calibrated finger scaling: {self.finger_scaling}")
         print(f"[Retargeter] Human finger lengths: {human_lengths}")
         print(f"[Retargeter] Robot finger lengths: {self.robot_finger_lengths}")
-
-    def reset_calibration(self):
-        """Reset calibration so next retarget call will recalibrate."""
-        self.is_calibrated = False
-        self.finger_scaling = np.ones(5, dtype=np.float32)
-
-    def recalibrate(self, mediapipe_pose: np.ndarray):
-        """Manually recalibrate with a specific hand pose.
-        
-        Use this when the user wants to calibrate with a specific hand position
-        (e.g., flat open hand for best accuracy).
-        
-        Args:
-            mediapipe_pose: MediaPipe hand landmarks (21, 3)
-        """
-        mediapipe_pose = np.asarray(mediapipe_pose, dtype=np.float64)
-        if mediapipe_pose.shape != (21, 3):
-            raise ValueError(f"Expected mediapipe_pose shape (21, 3), got {mediapipe_pose.shape}")
-        self._calibrate_scaling(mediapipe_pose)
 
     def _retarget_optimization(self, ref_value: np.ndarray, target_dir: np.ndarray) -> np.ndarray:
         qpos = self.optimizer.retarget(
@@ -223,6 +198,24 @@ class ROBOTISHandRetargeter:
         self.last_qpos = qpos
         return self.filter.next(qpos)
 
+class LPFilter:
+    """Low-pass filter for smoothing joint positions."""
+    def __init__(self, alpha):
+        self.alpha = alpha
+        self.y = None
+        self.is_init = False
+
+    def next(self, x):
+        if not self.is_init:
+            self.y = x
+            self.is_init = True
+            return self.y.copy()
+        self.y = self.y + self.alpha * (x - self.y)
+        return self.y.copy()
+
+    def reset(self):
+        self.y = None
+        self.is_init = False
 
 __all__ = [
     "ROBOTISHandRetargeter",
