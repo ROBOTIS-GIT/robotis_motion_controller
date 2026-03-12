@@ -89,7 +89,7 @@ using Eigen::VectorXd;
                 OsqpEigen::Solver solver;
         
                 // Configure solver settings
-                solver.settings()->setWarmStart(false);
+                solver.settings()->setWarmStart(true);
                 solver.settings()->getSettings()->verbose = false;
         
                 // Set QP problem data
