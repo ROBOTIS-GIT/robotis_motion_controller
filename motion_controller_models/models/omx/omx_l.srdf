@@ -1,4 +1,0 @@
-<!-- Dummy SRDF file to match the convention of the controller-->
-<?xml version="1.0" ?>
-<robot name="omx_l">
-</robot>

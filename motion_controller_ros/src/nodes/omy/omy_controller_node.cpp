@@ -38,8 +38,8 @@ namespace motion_controller_ros
         ee_pose_topic_ = this->declare_parameter("ee_pose_topic", std::string("~/current_pose"));
         controller_error_topic_ = this->declare_parameter("controller_error_topic", std::string("~/controller_error"));
 
-        if (urdf_path_.empty() || srdf_path_.empty()) {
-            RCLCPP_FATAL(this->get_logger(), "Both 'urdf_path' and 'srdf_path' parameters must be provided.");
+        if (urdf_path_.empty()) {
+            RCLCPP_FATAL(this->get_logger(), "The 'urdf_path' parameter must be provided.");
             rclcpp::shutdown();
             return;
         }
@@ -60,7 +60,11 @@ namespace motion_controller_ros
 
         try {
             RCLCPP_INFO(this->get_logger(), "URDF path: %s", urdf_path_.c_str());
-            RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
+            if (srdf_path_.empty()) {
+                RCLCPP_INFO(this->get_logger(), "SRDF path not provided. Continuing without SRDF.");
+            } else {
+                RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
+            }
             RCLCPP_INFO(this->get_logger(), "Loading URDF and initializing kinematics solver...");
             kinematics_solver_ =
                 std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);

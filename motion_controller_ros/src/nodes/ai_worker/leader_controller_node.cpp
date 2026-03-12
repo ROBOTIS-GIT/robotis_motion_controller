@@ -82,18 +82,19 @@ namespace motion_controller_ros
             if (urdf_path_.empty()) {
                 throw std::runtime_error("URDF path not provided.");
             }
-            if (srdf_path_.empty()) {
-                throw std::runtime_error("SRDF path not provided.");
-            }
             RCLCPP_INFO(this->get_logger(), "URDF path: %s", urdf_path_.c_str());
-            RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
         } catch (const std::exception& e) {
-            RCLCPP_FATAL(this->get_logger(), "Failed to resolve URDF/SRDF paths: %s", e.what());
+            RCLCPP_FATAL(this->get_logger(), "Failed to resolve robot model paths: %s", e.what());
             rclcpp::shutdown();
             return;
         }
 
         try {
+            if (srdf_path_.empty()) {
+                RCLCPP_INFO(this->get_logger(), "SRDF path not provided. Continuing without SRDF.");
+            } else {
+                RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
+            }
             RCLCPP_INFO(this->get_logger(), "Loading URDF and initializing kinematics solver...");
             kinematics_solver_ = std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);
 

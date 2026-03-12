@@ -51,14 +51,6 @@ def generate_launch_description():
                                   'ffw_lg2_leader.urdf'
                               ]),
                               description='Path to robot URDF file.'),
-        DeclareLaunchArgument('leader_srdf_path',
-                              default_value=PathJoinSubstitution([
-                                  FindPackageShare('motion_controller_models'),
-                                  'models',
-                                  'ai_worker',
-                                  'ffw_lg2_leader.srdf'
-                              ]),
-                              description='Path to robot SRDF file.'),
         DeclareLaunchArgument('config_file',
                               default_value=PathJoinSubstitution([
                                   FindPackageShare('motion_controller_ros'),
@@ -75,7 +67,6 @@ def generate_launch_description():
     follower_urdf_path = LaunchConfiguration('follower_urdf_path')
     follower_srdf_path = LaunchConfiguration('follower_srdf_path')
     leader_urdf_path = LaunchConfiguration('leader_urdf_path')
-    leader_srdf_path = LaunchConfiguration('leader_srdf_path')
     base_frame = LaunchConfiguration('base_frame')
     reactivate_topic = LaunchConfiguration('reactivate_topic')
     marker_scale = LaunchConfiguration('marker_scale')
@@ -107,7 +98,6 @@ def generate_launch_description():
         executable='leader_controller_node',
         parameters=[config_file, {
             'urdf_path': leader_urdf_path,
-            'srdf_path': leader_srdf_path,
             'reactivate_topic': reactivate_topic,
         }],
         output='screen',

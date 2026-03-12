@@ -15,11 +15,13 @@ namespace kinematics
     KinematicsSolver::KinematicsSolver(const std::string& urdf_path, const std::string& srdf_path)
     : urdf_path_(urdf_path), srdf_path_(srdf_path)
     {
+        const bool has_srdf_path = !srdf_path.empty();
+
         if (!std::filesystem::exists(urdf_path))
         {
             throw std::runtime_error("URDF file does not exist: " + urdf_path);
         }
-        if (!std::filesystem::exists(srdf_path))
+        if (has_srdf_path && !std::filesystem::exists(srdf_path))
         {
             throw std::runtime_error("SRDF file does not exist: " + srdf_path);
         }
@@ -32,14 +34,14 @@ namespace kinematics
         
         geom_model_.addAllCollisionPairs();
 
-        if (std::filesystem::exists(srdf_path))
+        if (has_srdf_path)
         {
             pinocchio::srdf::removeCollisionPairs(model_, geom_model_, srdf_path);
         }
         else
         {
-            std::clog << "\033[33m" << "SRDF file does not exist! : " << "\033[0m" << srdf_path << "\033[0m" << std::endl;
-            std::clog << "\033[33m" << "All the collision pairs is activated!" << "\033[0m" << std::endl;
+            std::clog << "\033[33m" << "No SRDF path provided." << "\033[0m" << std::endl;
+            std::clog << "\033[33m" << "All collision pairs remain active." << "\033[0m" << std::endl;
         }
 
         geom_data_ = pinocchio::GeometryData(geom_model_);
