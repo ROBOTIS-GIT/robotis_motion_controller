@@ -14,7 +14,7 @@
 #include <std_msgs/msg/string.hpp>
 #include <trajectory_msgs/msg/joint_trajectory.hpp>
 
-#include "motion_controller_msgs/msg/move_l.hpp"
+#include "robotis_interfaces/msg/move_l.hpp"
 #include "motion_controller_core/common/type_define.h"
 #include "motion_controller_core/controllers/omx/omx_movel_controller.hpp"
 #include "motion_controller_core/kinematics/kinematics_solver.hpp"
@@ -40,7 +40,7 @@ namespace motion_controller_ros
         void publishControllerError(const std::string& error) const;
 
         void jointStateCallback(const sensor_msgs::msg::JointState::SharedPtr msg);
-        void moveLCallback(const motion_controller_msgs::msg::MoveL::SharedPtr msg);
+        void moveLCallback(const robotis_interfaces::msg::MoveL::SharedPtr msg);
         void controlLoopCallback();
 
         Eigen::Affine3d poseMsgToEigen(const geometry_msgs::msg::PoseStamped& pose_msg) const;
@@ -74,7 +74,7 @@ namespace motion_controller_ros
         std::string controller_error_topic_;
 
         rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_sub_;
-        rclcpp::Subscription<motion_controller_msgs::msg::MoveL>::SharedPtr movel_sub_;
+        rclcpp::Subscription<robotis_interfaces::msg::MoveL>::SharedPtr movel_sub_;
 
         rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr joint_command_pub_;
         rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ee_pose_pub_;

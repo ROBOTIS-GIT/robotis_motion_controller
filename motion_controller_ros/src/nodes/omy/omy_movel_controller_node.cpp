@@ -61,7 +61,7 @@ namespace motion_controller_ros
         joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
             joint_states_topic_, 10,
             std::bind(&OmyMoveLControllerNode::jointStateCallback, this, std::placeholders::_1));
-        movel_sub_ = this->create_subscription<motion_controller_msgs::msg::MoveL>(
+        movel_sub_ = this->create_subscription<robotis_interfaces::msg::MoveL>(
             movel_topic_, 10,
             std::bind(&OmyMoveLControllerNode::moveLCallback, this, std::placeholders::_1));
 
@@ -230,7 +230,7 @@ namespace motion_controller_ros
         }
     }
 
-    void OmyMoveLControllerNode::moveLCallback(const motion_controller_msgs::msg::MoveL::SharedPtr msg)
+    void OmyMoveLControllerNode::moveLCallback(const robotis_interfaces::msg::MoveL::SharedPtr msg)
     {
         if (!msg || !joint_state_received_) {
             RCLCPP_WARN_THROTTLE(

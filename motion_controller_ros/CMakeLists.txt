@@ -23,7 +23,7 @@ find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(motion_controller_msgs REQUIRED)
+find_package(robotis_interfaces REQUIRED)
 
 # Setup fallback paths first
 set(MOTION_CONTROLLER_CORE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../motion_controller_core/include")
@@ -208,7 +208,7 @@ ament_target_dependencies(omx_movej_controller_node
 )
 
 ament_target_dependencies(omx_movel_controller_node
-  motion_controller_msgs
+  robotis_interfaces
   rclcpp
   std_msgs
   geometry_msgs
@@ -233,7 +233,7 @@ ament_target_dependencies(omy_movej_controller_node
 )
 
 ament_target_dependencies(omy_movel_controller_node
-  motion_controller_msgs
+  robotis_interfaces
   rclcpp
   std_msgs
   geometry_msgs
