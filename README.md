@@ -45,6 +45,17 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 │   ├── CMakeLists.txt
 │   └── package.xml
 │
+├── motion_controller_ros_py/
+│   ├── resources/
+│   │   └── ...
+│   ├── scripts/
+│   │   └── ...
+│   ├── test/
+│   │   └── ...
+│   ├── package.xml
+│   ├── setup.cfg
+│   └── setup.py
+│
 └── motion_controller_models/
     ├── launch/
     │   └── ...
@@ -61,7 +72,7 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 | `motion_controller_core/include/motion_controller_core/optimization/` | QP definitions and solver interfaces |
 | `motion_controller_core/src/controllers/` | Controller implementations |
 | `motion_controller_core/src/kinematics/` | Kinematics solver implementation |
-| `motion_controller_core/src/retargeting/` | Retargeting module (placeholder, not yet implemented) |
+| `motion_controller_core/src/retargeting/` | Retargeting module |
 
 | Directory | Description |
 |-----------|-------------|
@@ -69,6 +80,11 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 | `motion_controller_ros/launch/` | Launch files for running the controller nodes |
 | `motion_controller_ros/src/nodes/` | ROS 2 node executables for each controller type |
 | `motion_controller_ros/src/utils/` | Utility nodes |
+
+| Directory | Description |
+|-----------|-------------|
+| `motion_controller_ros_py/` | ROS 2 Python package containing controller nodes |
+| `motion_controller_ros_py/scripts/` | Script files for running the controller nodes |
 
 | Directory | Description |
 |-----------|-------------|
@@ -120,6 +136,18 @@ source ~/.bashrc
 ```bash
 sudo apt update
 sudo apt install -y ros-jazzy-pinocchio
+```
+
+### Install NLopt (for retargeting)
+
+```bash
+pip3 install nlopt
+```
+
+### Install PyTorch (for retargeting)
+
+```bash
+pip3 install torch
 ```
 
 ### Build in a ROS 2 workspace

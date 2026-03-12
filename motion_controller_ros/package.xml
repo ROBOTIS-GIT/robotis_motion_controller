@@ -4,10 +4,9 @@
   <name>motion_controller_ros</name>
   <version>0.0.1</version>
   <description>ROS 2 wrapper for motion controller using QP-based inverse kinematics</description>
-  <maintainer email="kyu@robotis.com">YoungWook0533</maintainer>
-  <license>Apache-2.0</license>
-
-  <author email="kyu@robotis.com">YoungWook0533</author>
+  <maintainer email="pyo@robotis.com">Pyo</maintainer>
+  <license>Apache 2.0</license>
+  <author email="kyu@robotis.com">Yeonguk Kim</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -21,7 +20,7 @@
   <depend>trajectory_msgs</depend>
   <depend>interactive_markers</depend>
   <depend>tf2_ros</depend>
-  <depend>motion_controller_msgs</depend>
+  <depend>robotis_interfaces</depend>
   <depend>motion_controller_core</depend>
   <depend>ament_index_cpp</depend>
   <exec_depend>motion_controller_models</exec_depend>

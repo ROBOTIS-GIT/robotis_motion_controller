@@ -1,10 +1,14 @@
 from setuptools import find_packages, setup
 
 package_name = 'motion_controller_ros_py'
-
+authors_info = [
+    ('Hyunwoo Nam', 'nhw@robotis.com'),
+]
+authors = ', '.join(author for author, _ in authors_info)
+author_emails = ', '.join(email for _, email in authors_info)
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.0.1',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -13,10 +17,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='nhw',
-    maintainer_email='nhw@robotis.com',
-    description='TODO: Package description',
-    license='Apache-2.0',
+    maintainer='Pyo',
+    maintainer_email='pyo@robotis.com',
+    description='Motion Controller ROS 2 Python package',
+    license='Apache 2.0',
     extras_require={
         'test': [
             'pytest',

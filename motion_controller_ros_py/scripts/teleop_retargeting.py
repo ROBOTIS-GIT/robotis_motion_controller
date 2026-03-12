@@ -10,7 +10,7 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from motion_controller_msgs.msg import HandJoints
+from robotis_interfaces.msg import HandJoints
 
 from retargeting.seq_retarget import ROBOTISHandRetargeter
 
