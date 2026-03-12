@@ -3,12 +3,18 @@
    <link name="hx5_d20_right_base">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_base_unit.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_base_unit.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -33,12 +39,18 @@
    <link name="finger_r_link1">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -62,12 +74,18 @@
    <link name="finger_r_link2">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_mcp2.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_mcp2.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -91,12 +109,18 @@
    <link name="finger_r_link3">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_ip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_ip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -120,12 +144,18 @@
    <link name="finger_r_link4">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_thumb_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -146,6 +176,9 @@
    <link name="finger_end_r_link1">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+         <box size="0.01 0.01 0.01" />
+         </geometry>
          <material name="red">
          <color rgba="1.0 0.0 0.0 1"/>
          </material>
@@ -163,12 +196,18 @@
    <link name="finger_r_link5">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -192,12 +231,18 @@
    <link name="finger_r_link6">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -221,12 +266,18 @@
    <link name="finger_r_link7">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -250,12 +301,18 @@
    <link name="finger_r_link8">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -276,6 +333,9 @@
    <link name="finger_end_r_link2">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+         <box size="0.01 0.01 0.01" />
+         </geometry>
          <material name="red">
          <color rgba="1.0 0.0 0.0 1"/>
          </material>
@@ -293,12 +353,18 @@
    <link name="finger_r_link9">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -322,12 +388,18 @@
    <link name="finger_r_link10">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -351,12 +423,18 @@
    <link name="finger_r_link11">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -380,12 +458,18 @@
    <link name="finger_r_link12">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -406,6 +490,9 @@
    <link name="finger_end_r_link3">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+         <box size="0.01 0.01 0.01" />
+         </geometry>
          <material name="red">
          <color rgba="1.0 0.0 0.0 1"/>
          </material>
@@ -423,12 +510,18 @@
    <link name="finger_r_link13">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -452,12 +545,18 @@
    <link name="finger_r_link14">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -481,12 +580,18 @@
    <link name="finger_r_link15">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -510,12 +615,18 @@
    <link name="finger_r_link16">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -536,6 +647,9 @@
    <link name="finger_end_r_link4">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+         <box size="0.01 0.01 0.01" />
+         </geometry>
          <material name="red">
          <color rgba="1.0 0.0 0.0 1"/>
          </material>
@@ -553,12 +667,18 @@
    <link name="finger_r_link17">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_mcp.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -582,12 +702,18 @@
    <link name="finger_r_link18">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_pip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -611,12 +737,18 @@
    <link name="finger_r_link19">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_dip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -640,12 +772,18 @@
    <link name="finger_r_link20">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
       </visual>
       <collision>
          <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+            <mesh filename="package://ffw_description/meshes/common/hx5_d20/hx5_d20_right/hx5_d20_finger_tip.stl" scale="0.001 0.001 0.001" />
+         </geometry>
          <material name="grey">
             <color rgba="0.2 0.2 0.2 1" />
          </material>
@@ -666,6 +804,9 @@
    <link name="finger_end_r_link5">
       <visual>
          <origin xyz="0 0 0" rpy="0 0 0"/>
+         <geometry>
+         <box size="0.01 0.01 0.01" />
+         </geometry>
          <material name="red">
          <color rgba="1.0 0.0 0.0 1"/>
          </material>
