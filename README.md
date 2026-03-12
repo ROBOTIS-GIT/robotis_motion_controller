@@ -5,6 +5,9 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 ## Repository Structure
 
 ```text
+├── motion_controller/
+│   ├── CMakeLists.txt
+│   └── package.xml
 ├── motion_controller_core/
 │   ├── include/motion_controller_core/
 │   │   ├── common/
@@ -96,7 +99,8 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 
 ### Prerequisites
 
-- ROS 2 Jazzy installed
+- **ROS 2 Jazzy** installed
+- [**robotis_interfaces**](https://github.com/ROBOTIS-GIT/robotis_interfaces) available in your workspace
 
 ### Install OSQP
 
@@ -200,7 +204,7 @@ When `controller_type:=omx` and `start_interactive_marker:=true`, `omx_controlle
 Example `movel` command:
 
 ```bash
-ros2 topic pub --once /omx_movel_controller/movel motion_controller_msgs/msg/MoveL "{
+ros2 topic pub --once /omx_movel_controller/movel robotis_interfaces/msg/MoveL "{
   pose: {
     pose: {
       position: {x: 0.20, y: 0.00, z: 0.18},
@@ -245,7 +249,7 @@ When `controller_type:=omy` and `start_interactive_marker:=true`, `omy_controlle
 Example `movel` command:
 
 ```bash
-ros2 topic pub --once /omy_movel_controller/movel motion_controller_msgs/msg/MoveL "{
+ros2 topic pub --once /omy_movel_controller/movel robotis_interfaces/msg/MoveL "{
   pose: {
     pose: {
       position: {x: 0.30, y: -0.20, z: 0.5},
