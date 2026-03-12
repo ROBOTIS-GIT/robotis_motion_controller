@@ -11,8 +11,6 @@ find_package(OsqpEigen REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 set(SOURCES
     src/kinematics/kinematics_solver.cpp
     src/controllers/ai_worker/ai_worker_controller.cpp
