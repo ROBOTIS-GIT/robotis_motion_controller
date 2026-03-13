@@ -32,17 +32,38 @@ jobs:
         with:
           required-ros-distributions: jazzy
 
+      - name: Install OSQP and OsqpEigen
+        shell: bash
+        run: |
+          set -e
+          apt-get update
+          apt-get install -y --no-install-recommends git cmake build-essential pkg-config
+
+          git clone --depth 1 https://github.com/osqp/osqp.git /tmp/osqp
+          cmake -S /tmp/osqp -B /tmp/osqp/build -G "Unix Makefiles"
+          cmake --build /tmp/osqp/build
+          cmake --build /tmp/osqp/build --target install
+
+          git clone --depth 1 https://github.com/robotology/osqp-eigen.git /tmp/osqp-eigen
+          cmake -S /tmp/osqp-eigen -B /tmp/osqp-eigen/build -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build /tmp/osqp-eigen/build
+          cmake --build /tmp/osqp-eigen/build --target install
+
       - name: Check and install ROS dependencies
         shell: bash
         run: |
           set -e
           source /opt/ros/jazzy/setup.bash
           rosdep update
-          rosdep install --from-paths ros_ws/src --ignore-src -y -r --rosdistro jazzy --skip-keys dynamixel_hardware_interface
-          rosdep check --from-paths ros_ws/src --ignore-src --rosdistro jazzy --skip-keys dynamixel_hardware_interface
+          rosdep install --from-paths ros_ws/src --ignore-src -y -r --rosdistro jazzy --skip-keys "dynamixel_hardware_interface osqp-eigen"
+          rosdep check --from-paths ros_ws/src --ignore-src --rosdistro jazzy --skip-keys "dynamixel_hardware_interface osqp-eigen"
 
       - name: Build packages
         uses: ros-tooling/action-ros-ci@v0.4
+        env:
+          CMAKE_PREFIX_PATH: /usr/local:${{ env.CMAKE_PREFIX_PATH }}
+          OsqpEigen_DIR: /usr/local/lib/cmake/OsqpEigen
+          LD_LIBRARY_PATH: /usr/local/lib:${{ env.LD_LIBRARY_PATH }}
         with:
           target-ros2-distro: jazzy
           package-name: |
@@ -51,4 +72,3 @@ jobs:
             motion_controller_models
             motion_controller_ros
             motion_controller_ros_py
-          skip-tests: true
