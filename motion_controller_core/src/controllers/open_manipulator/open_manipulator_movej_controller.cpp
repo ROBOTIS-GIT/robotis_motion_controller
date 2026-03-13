@@ -1,4 +1,20 @@
-#include "motion_controller_core/controllers/omx/omx_movej_controller.hpp"
+// Copyright 2026 ROBOTIS CO., LTD.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Yeonguk Kim
+
+#include "motion_controller_core/controllers/open_manipulator/open_manipulator_movej_controller.hpp"
 
 #include <algorithm>
 
@@ -6,7 +22,7 @@ namespace motion_controller
 {
 namespace controllers
 {
-    OMXMoveJController::OMXMoveJController(
+    OpenManipulatorMoveJController::OpenManipulatorMoveJController(
         std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data,
         double dt)
         : motion_controller::optimization::QPBase(),
@@ -58,14 +74,14 @@ namespace controllers
         damping_weight_.setOnes(joint_dof_);
     }
 
-    void OMXMoveJController::setDesiredJointVel(const Eigen::VectorXd& joint_qdot_desired)
+    void OpenManipulatorMoveJController::setDesiredJointVel(const Eigen::VectorXd& joint_qdot_desired)
     {
         if (joint_qdot_desired.size() == joint_dof_) {
             joint_qdot_desired_ = joint_qdot_desired;
         }
     }
 
-    void OMXMoveJController::setWeights(
+    void OpenManipulatorMoveJController::setWeights(
         const Eigen::VectorXd& joint_tracking_weight,
         const Eigen::VectorXd& damping_weight)
     {
@@ -77,7 +93,7 @@ namespace controllers
         }
     }
 
-    void OMXMoveJController::setControllerParams(
+    void OpenManipulatorMoveJController::setControllerParams(
         double slack_penalty,
         double cbf_alpha,
         double buffer_distance,
@@ -89,7 +105,7 @@ namespace controllers
         collision_safe_distance_ = safe_distance;
     }
 
-    bool OMXMoveJController::getOptJointVel(Eigen::VectorXd& opt_qdot)
+    bool OpenManipulatorMoveJController::getOptJointVel(Eigen::VectorXd& opt_qdot)
     {
         Eigen::MatrixXd sol;
         if (!solveQP(sol)) {
@@ -101,7 +117,7 @@ namespace controllers
         return true;
     }
 
-    void OMXMoveJController::setCost()
+    void OpenManipulatorMoveJController::setCost()
     {
         P_ds_.setZero(nx_, nx_);
         q_ds_.setZero(nx_);
@@ -131,7 +147,7 @@ namespace controllers
         }
     }
 
-    void OMXMoveJController::setBoundConstraint()
+    void OpenManipulatorMoveJController::setBoundConstraint()
     {
         l_bound_ds_.setConstant(nbc_, -OSQP_INFTY);
         u_bound_ds_.setConstant(nbc_, OSQP_INFTY);
@@ -150,7 +166,7 @@ namespace controllers
         }
     }
 
-    void OMXMoveJController::setIneqConstraint()
+    void OpenManipulatorMoveJController::setIneqConstraint()
     {
         A_ineq_ds_.setZero(nineqc_, nx_);
         l_ineq_ds_.setConstant(nineqc_, -OSQP_INFTY);
@@ -213,7 +229,7 @@ namespace controllers
         }
     }
 
-    void OMXMoveJController::setEqConstraint()
+    void OpenManipulatorMoveJController::setEqConstraint()
     {
         A_eq_ds_.setZero(neqc_, nx_);
         b_eq_ds_.setZero(neqc_);

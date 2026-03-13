@@ -1,3 +1,19 @@
+// Copyright 2026 ROBOTIS CO., LTD.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Yeonguk Kim
+
 #pragma once
 
 #include <memory>
@@ -16,7 +32,7 @@
 
 #include "robotis_interfaces/msg/move_l.hpp"
 #include "motion_controller_core/common/type_define.h"
-#include "motion_controller_core/controllers/omy/omy_movel_controller.hpp"
+#include "motion_controller_core/controllers/open_manipulator/open_manipulator_movel_controller.hpp"
 #include "motion_controller_core/kinematics/kinematics_solver.hpp"
 
 namespace motion_controller_ros
@@ -83,7 +99,7 @@ namespace motion_controller_ros
         rclcpp::TimerBase::SharedPtr control_timer_;
 
         std::shared_ptr<motion_controller::kinematics::KinematicsSolver> kinematics_solver_;
-        std::shared_ptr<motion_controller::controllers::OMYMoveLController> qp_controller_;
+        std::shared_ptr<motion_controller::controllers::OpenManipulatorMoveLController> qp_controller_;
 
         Eigen::VectorXd q_;
         Eigen::VectorXd qdot_;

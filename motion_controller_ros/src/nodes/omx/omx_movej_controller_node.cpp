@@ -1,3 +1,19 @@
+// Copyright 2026 ROBOTIS CO., LTD.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Yeonguk Kim
+
 #include "motion_controller_ros/nodes/omx/omx_movej_controller_node.hpp"
 
 #include "motion_controller_core/common/type_define.h"
@@ -70,7 +86,7 @@ namespace motion_controller_ros
             kinematics_solver_ =
                 std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);
             RCLCPP_INFO(this->get_logger(), "Initializing QP controller...");
-            qp_controller_ = std::make_shared<motion_controller::controllers::OMXMoveJController>(
+            qp_controller_ = std::make_shared<motion_controller::controllers::OpenManipulatorMoveJController>(
                 kinematics_solver_, time_step_);
             qp_controller_->setControllerParams(
                 slack_penalty_, cbf_alpha_, collision_buffer_, collision_safe_distance_);

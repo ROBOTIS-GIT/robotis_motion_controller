@@ -1,7 +1,25 @@
+// Copyright 2026 ROBOTIS CO., LTD.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Yeonguk Kim
+
 #pragma once
 
 #include <memory>
+#include <string>
 
+#include "motion_controller_core/common/type_define.h"
 #include "motion_controller_core/kinematics/kinematics_solver.hpp"
 #include "motion_controller_core/optimization/qp_base.hpp"
 
@@ -9,18 +27,22 @@ namespace motion_controller
 {
 namespace controllers
 {
-    class OMXMoveJController : public motion_controller::optimization::QPBase
+    class OpenManipulatorMoveLController : public motion_controller::optimization::QPBase
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        OMXMoveJController(
+        OpenManipulatorMoveLController(
             std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data,
+            const std::string& controlled_link,
             double dt);
 
-        void setDesiredJointVel(const Eigen::VectorXd& joint_qdot_desired);
+        void setControlledLink(const std::string& controlled_link);
+        const std::string& getControlledLink() const { return controlled_link_; }
+
+        void setDesiredTaskVel(const motion_controller::common::Vector6d& task_xdot_desired);
         void setWeights(
-            const Eigen::VectorXd& joint_tracking_weight,
+            const motion_controller::common::Vector6d& task_tracking_weight,
             const Eigen::VectorXd& damping_weight);
         void setControllerParams(
             double slack_penalty,
@@ -57,11 +79,12 @@ namespace controllers
         } si_index_;
 
         std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data_;
+        std::string controlled_link_;
         double dt_;
         int joint_dof_;
 
-        Eigen::VectorXd joint_qdot_desired_;
-        Eigen::VectorXd joint_tracking_weight_;
+        motion_controller::common::Vector6d task_xdot_desired_;
+        motion_controller::common::Vector6d task_tracking_weight_;
         Eigen::VectorXd damping_weight_;
 
         double slack_penalty_;
