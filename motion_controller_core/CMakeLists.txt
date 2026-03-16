@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
-find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
 set(SOURCES
