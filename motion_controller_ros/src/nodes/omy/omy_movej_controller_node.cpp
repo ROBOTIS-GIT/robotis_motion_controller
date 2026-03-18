@@ -99,7 +99,6 @@ OmyMoveJControllerNode::OmyMoveJControllerNode()
     movej_goal_.setZero(kinematics_solver_->getDof());
 
     initializeJointConfig();
-
   } catch (const std::exception & e) {
     RCLCPP_FATAL(this->get_logger(), "Failed to initialize OMY MoveJ Controller: %s", e.what());
     rclcpp::shutdown();
@@ -258,7 +257,8 @@ void OmyMoveJControllerNode::jointStateCallback(const sensor_msgs::msg::JointSta
     movej_start_ = q_;
     movej_goal_ = q_;
     commanded_state_initialized_ = true;
-    RCLCPP_INFO(this->get_logger(), "OMY MoveJ Controller activated. Waiting for moveJ commands...");
+    RCLCPP_INFO(this->get_logger(),
+        "OMY MoveJ Controller activated. Waiting for moveJ commands...");
   }
 }
 

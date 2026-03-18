@@ -194,7 +194,8 @@ void AIWorkerMoveJController::setIneqConstraint()
     const int pair_count = std::min<int>(si_index_.con_sel_col_size, pair_results.size());
     for (int i = 0; i < pair_count; ++i) {
       const auto & res = pair_results[i];
-      A_ineq_ds_.block(si_index_.con_sel_col_start + i, si_index_.qdot_start, 1, si_index_.qdot_size) =
+      A_ineq_ds_.block(si_index_.con_sel_col_start + i, si_index_.qdot_start, 1,
+            si_index_.qdot_size) =
         res.grad.transpose();
       if (si_index_.slack_sel_col_size > 0 && i < si_index_.slack_sel_col_size) {
         A_ineq_ds_(si_index_.con_sel_col_start + i, si_index_.slack_sel_col_start + i) = 1.0;

@@ -103,7 +103,6 @@ OmyMoveLControllerNode::OmyMoveLControllerNode()
     q_commanded_.setZero(kinematics_solver_->getDof());
 
     initializeJointConfig();
-
   } catch (const std::exception & e) {
     RCLCPP_FATAL(this->get_logger(), "Failed to initialize OMY MoveL Controller: %s", e.what());
     rclcpp::shutdown();
@@ -236,7 +235,6 @@ void OmyMoveLControllerNode::jointStateCallback(const sensor_msgs::msg::JointSta
     movel_start_pose_ = kinematics_solver_->getPose(controlled_link_);
     movel_goal_pose_ = movel_start_pose_;
     movel_target_initialized_ = true;
-
   }
 }
 

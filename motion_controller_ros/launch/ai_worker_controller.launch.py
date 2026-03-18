@@ -240,7 +240,13 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(
             PythonExpression(
-                ["'", controller_type, "' == 'movel' and '", start_interactive_marker, "' == 'true'"]
+                [
+                    "'",
+                    controller_type,
+                    "' == 'movel' and '",
+                    start_interactive_marker,
+                    "' == 'true'",
+                ]
             )
         ),
     )
@@ -266,7 +272,13 @@ def generate_launch_description():
         output='screen',
         condition=IfCondition(
             PythonExpression(
-                ["'", controller_type, "' == 'movel' and '", start_interactive_marker, "' == 'true'"]
+                [
+                    "'",
+                    controller_type,
+                    "' == 'movel' and '",
+                    start_interactive_marker,
+                    "' == 'true'",
+                ]
             )
         ),
     )

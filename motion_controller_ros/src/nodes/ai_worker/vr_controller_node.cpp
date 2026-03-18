@@ -185,7 +185,8 @@ VRController::VRController()
     kinematics_solver_ =
       std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);
     RCLCPP_INFO(this->get_logger(), "Initializing QP controller...");
-    qp_controller_ = std::make_shared<motion_controller::controllers::VRController>(kinematics_solver_,
+    qp_controller_ =
+      std::make_shared<motion_controller::controllers::VRController>(kinematics_solver_,
         dt_);
     qp_controller_->setControllerParams(slack_penalty_, cbf_alpha_, collision_buffer_,
         collision_safe_distance_);

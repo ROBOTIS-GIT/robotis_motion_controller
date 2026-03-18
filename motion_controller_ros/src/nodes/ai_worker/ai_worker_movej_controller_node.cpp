@@ -158,7 +158,8 @@ void AIWorkerMoveJController::initializeJointConfig()
   std::sort(right_arm_joints_.begin(), right_arm_joints_.end());
 }
 
-void AIWorkerMoveJController::extractJointStates(const sensor_msgs::msg::JointState::SharedPtr & msg)
+void AIWorkerMoveJController::extractJointStates(
+  const sensor_msgs::msg::JointState::SharedPtr & msg)
 {
   const int dof = kinematics_solver_->getDof();
   q_.setZero(dof);
@@ -445,12 +446,14 @@ void AIWorkerMoveJController::publishTrajectory(const Eigen::VectorXd & q_comman
 
   if (!left_arm_indices.empty()) {
     arm_l_pub_->publish(createTrajectoryMsgWithGripper(
-      left_arm_joints_, q_command, left_arm_indices, left_gripper_joint_name_, left_gripper_position_));
+      left_arm_joints_, q_command, left_arm_indices, left_gripper_joint_name_,
+        left_gripper_position_));
   }
 
   if (!right_arm_indices.empty()) {
     arm_r_pub_->publish(createTrajectoryMsgWithGripper(
-      right_arm_joints_, q_command, right_arm_indices, right_gripper_joint_name_, right_gripper_position_));
+      right_arm_joints_, q_command, right_arm_indices, right_gripper_joint_name_,
+        right_gripper_position_));
   }
 }
 

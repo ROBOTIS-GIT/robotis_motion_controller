@@ -67,13 +67,18 @@ AIWorkerMoveLController::AIWorkerMoveLController()
     "lift_topic",
     std::string("/leader/joystick_controller_right/joint_trajectory"));
   lift_vel_bound_ = this->declare_parameter("lift_vel_bound", 0.0);
-  r_gripper_pose_topic_ = this->declare_parameter("r_gripper_pose_topic", std::string("/r_gripper_pose"));
-  l_gripper_pose_topic_ = this->declare_parameter("l_gripper_pose_topic", std::string("/l_gripper_pose"));
-  controller_error_topic_ = this->declare_parameter("controller_error_topic", std::string("~/controller_error"));
+  r_gripper_pose_topic_ = this->declare_parameter("r_gripper_pose_topic",
+      std::string("/r_gripper_pose"));
+  l_gripper_pose_topic_ = this->declare_parameter("l_gripper_pose_topic",
+      std::string("/l_gripper_pose"));
+  controller_error_topic_ = this->declare_parameter("controller_error_topic",
+      std::string("~/controller_error"));
   r_gripper_name_ = this->declare_parameter("r_gripper_name", std::string("arm_r_link7"));
   l_gripper_name_ = this->declare_parameter("l_gripper_name", std::string("arm_l_link7"));
-  right_gripper_joint_name_ = this->declare_parameter("right_gripper_joint", std::string("gripper_r_joint1"));
-  left_gripper_joint_name_ = this->declare_parameter("left_gripper_joint", std::string("gripper_l_joint1"));
+  right_gripper_joint_name_ = this->declare_parameter("right_gripper_joint",
+      std::string("gripper_r_joint1"));
+  left_gripper_joint_name_ = this->declare_parameter("left_gripper_joint",
+      std::string("gripper_l_joint1"));
 
   right_movel_sub_ = this->create_subscription<robotis_interfaces::msg::MoveL>(
     right_movel_topic_, 10,
@@ -88,9 +93,12 @@ AIWorkerMoveLController::AIWorkerMoveLController()
   arm_r_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(right_traj_topic_, 10);
   arm_l_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(left_traj_topic_, 10);
   lift_pub_ = this->create_publisher<trajectory_msgs::msg::JointTrajectory>(lift_topic_, 10);
-  r_gripper_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(r_gripper_pose_topic_, 10);
-  l_gripper_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(l_gripper_pose_topic_, 10);
-  controller_error_pub_ = this->create_publisher<std_msgs::msg::String>(controller_error_topic_, 10);
+  r_gripper_pose_pub_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>(r_gripper_pose_topic_, 10);
+  l_gripper_pose_pub_ =
+    this->create_publisher<geometry_msgs::msg::PoseStamped>(l_gripper_pose_topic_, 10);
+  controller_error_pub_ = this->create_publisher<std_msgs::msg::String>(controller_error_topic_,
+      10);
 
   if (urdf_path_.empty()) {
     RCLCPP_FATAL(this->get_logger(), "URDF path not provided.");
@@ -172,7 +180,8 @@ void AIWorkerMoveLController::initializeJointConfig()
   }
 }
 
-void AIWorkerMoveLController::extractJointStates(const sensor_msgs::msg::JointState::SharedPtr & msg)
+void AIWorkerMoveLController::extractJointStates(
+  const sensor_msgs::msg::JointState::SharedPtr & msg)
 {
   const int dof = kinematics_solver_->getDof();
   q_.setZero(dof);
@@ -231,7 +240,8 @@ void AIWorkerMoveLController::jointStateCallback(const sensor_msgs::msg::JointSt
   }
 }
 
-void AIWorkerMoveLController::rightMoveLCallback(const robotis_interfaces::msg::MoveL::SharedPtr msg)
+void AIWorkerMoveLController::rightMoveLCallback(
+  const robotis_interfaces::msg::MoveL::SharedPtr msg)
 {
   if (!msg || !joint_state_received_ || !q_desired_initialized_) {
     return;
@@ -265,7 +275,8 @@ Eigen::Affine3d AIWorkerMoveLController::poseMsgToEigen(
   const geometry_msgs::msg::PoseStamped & pose_msg) const
 {
   Eigen::Affine3d pose = Eigen::Affine3d::Identity();
-  pose.translation() << pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z;
+  pose.translation() << pose_msg.pose.position.x, pose_msg.pose.position.y,
+    pose_msg.pose.position.z;
 
   const Eigen::Quaterniond quat(
     pose_msg.pose.orientation.w,
@@ -448,12 +459,14 @@ void AIWorkerMoveLController::publishTrajectory(const Eigen::VectorXd & q_desire
 
   if (!left_arm_indices.empty()) {
     arm_l_pub_->publish(createTrajectoryMsgWithGripper(
-      left_arm_joints_, q_desired, left_arm_indices, left_gripper_joint_name_, left_gripper_position_));
+      left_arm_joints_, q_desired, left_arm_indices, left_gripper_joint_name_,
+        left_gripper_position_));
   }
 
   if (!right_arm_indices.empty()) {
     arm_r_pub_->publish(createTrajectoryMsgWithGripper(
-      right_arm_joints_, q_desired, right_arm_indices, right_gripper_joint_name_, right_gripper_position_));
+      right_arm_joints_, q_desired, right_arm_indices, right_gripper_joint_name_,
+        right_gripper_position_));
   }
 
   if (lift_joint_index_ >= 0 && !lift_joint_.empty() && lift_vel_bound_ != 0.0 &&
