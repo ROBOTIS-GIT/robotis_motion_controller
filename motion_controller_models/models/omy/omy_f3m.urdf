@@ -263,12 +263,12 @@
   </link>
   <!-- base -->
   <link name="rh_p12_rn_base">
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://open_manipulator_description/meshes/rh_p12_rn_a/base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -295,12 +295,12 @@
   </joint>
   <!-- rh_p12_rn_r1 -->
   <link name="rh_p12_rn_r1">
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://open_manipulator_description/meshes/rh_p12_rn_a/r1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -328,12 +328,12 @@
   </joint>
   <!-- rh_p12_rn_r2 -->
   <link name="rh_p12_rn_r2">
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://open_manipulator_description/meshes/rh_p12_rn_a/r2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -361,12 +361,12 @@
   </joint>
   <!-- rh_p12_rn_l1 -->
   <link name="rh_p12_rn_l1">
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://open_manipulator_description/meshes/rh_p12_rn_a/l1.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -394,12 +394,12 @@
   </joint>
   <!-- rh_p12_rn_l2 -->
   <link name="rh_p12_rn_l2">
-    <collision>
+    <!-- <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://open_manipulator_description/meshes/rh_p12_rn_a/l2.stl" scale="0.001 0.001 0.001"/>
       </geometry>
-    </collision>
+    </collision> -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>

@@ -14,7 +14,8 @@
 //
 // Author: Yeonguk Kim
 
-#include "motion_controller_core/controllers/ai_worker/ai_worker_controller.hpp"
+#include "motion_controller_core/controllers/ai_worker/ai_worker_movej_controller.hpp"
+
 #include <algorithm>
 
 namespace motion_controller
@@ -22,7 +23,7 @@ namespace motion_controller
 namespace controllers
 {
 
-QPIK::QPIK(
+AIWorkerMoveJController::AIWorkerMoveJController(
   std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data,
   const double dt)
 : motion_controller::optimization::QPBase(), robot_data_(robot_data), dt_(dt)
@@ -63,20 +64,26 @@ QPIK::QPIK(
   si_index_.con_sing_start = si_index_.con_q_max_start + si_index_.con_q_max_size;
   si_index_.con_sel_col_start = si_index_.con_sing_start + si_index_.con_sing_size;
 
+  qdot_desired_.setZero(joint_dof_);
+  w_tracking_.setOnes(joint_dof_);
   w_damping_.setOnes(joint_dof_);
+  slack_penalty_ = 1000.0;
+  cbf_alpha_ = 5.0;
+  collision_buffer_ = 0.05;
+  collision_safe_distance_ = 0.02;
 }
 
-void QPIK::setDesiredTaskVel(
-  const std::map<std::string,
-  motion_controller::common::Vector6d> & link_xdot_desired)
+void AIWorkerMoveJController::setDesiredJointVel(const Eigen::VectorXd & qdot_desired)
 {
-  link_xdot_desired_ = link_xdot_desired;
+  if (qdot_desired.size() == joint_dof_) {
+    qdot_desired_ = qdot_desired;
+  }
 }
 
-bool QPIK::getOptJointVel(Eigen::VectorXd & opt_qdot)
+bool AIWorkerMoveJController::getOptJointVel(Eigen::VectorXd & opt_qdot)
 {
   Eigen::MatrixXd sol;
-  if(!solveQP(sol)) {
+  if (!solveQP(sol)) {
     opt_qdot.setZero();
     return false;
   } else {
@@ -85,15 +92,18 @@ bool QPIK::getOptJointVel(Eigen::VectorXd & opt_qdot)
   }
 }
 
-void QPIK::setWeight(
-  const std::map<std::string, motion_controller::common::Vector6d> link_w_tracking,
-  const Eigen::VectorXd w_damping)
+void AIWorkerMoveJController::setWeight(
+  const Eigen::VectorXd & w_tracking, const Eigen::VectorXd & w_damping)
 {
-  link_w_tracking_ = link_w_tracking;
-  w_damping_ = w_damping;
+  if (w_tracking.size() == joint_dof_) {
+    w_tracking_ = w_tracking;
+  }
+  if (w_damping.size() == joint_dof_) {
+    w_damping_ = w_damping;
+  }
 }
 
-void QPIK::setControllerParams(
+void AIWorkerMoveJController::setControllerParams(
   const double slack_penalty, const double cbf_alpha,
   const double buffer_distance, const double safe_distance)
 {
@@ -103,32 +113,21 @@ void QPIK::setControllerParams(
   collision_safe_distance_ = safe_distance;
 }
 
-void QPIK::setCost()
+void AIWorkerMoveJController::setCost()
 {
   P_ds_.setZero(nx_, nx_);
   q_ds_.setZero(nx_);
 
-            // for task space velocity tracking
-  for(const auto & [link_name, xdot_desired] : link_xdot_desired_) {
-    Eigen::MatrixXd J_i = robot_data_->getJacobian(link_name);
-    motion_controller::common::Vector6d w_tracking = motion_controller::common::Vector6d::Ones();
+  P_ds_.block(
+    si_index_.qdot_start, si_index_.qdot_start,
+    si_index_.qdot_size, si_index_.qdot_size) += 2.0 * w_tracking_.asDiagonal();
+  q_ds_.segment(si_index_.qdot_start, si_index_.qdot_size) +=
+    -2.0 * w_tracking_.asDiagonal() * qdot_desired_;
 
-    auto iter = link_w_tracking_.find(link_name);
-    if(iter != link_w_tracking_.end()) {
-      w_tracking = iter->second;
-    }
+  P_ds_.block(
+    si_index_.qdot_start, si_index_.qdot_start,
+    si_index_.qdot_size, si_index_.qdot_size) += 2.0 * w_damping_.asDiagonal();
 
-    P_ds_.block(si_index_.qdot_start, si_index_.qdot_start, si_index_.qdot_size,
-          si_index_.qdot_size) += 2.0 * J_i.transpose() * w_tracking.asDiagonal() * J_i;
-    q_ds_.segment(si_index_.qdot_start,
-          si_index_.qdot_size) += -2.0 * J_i.transpose() * w_tracking.asDiagonal() * xdot_desired;
-  }
-
-            // for joint velocity damping
-  P_ds_.block(si_index_.qdot_start, si_index_.qdot_start, si_index_.qdot_size,
-        si_index_.qdot_size) += 2.0 * w_damping_.asDiagonal();
-
-            // for slack variables
   q_ds_.segment(si_index_.slack_q_min_start, si_index_.slack_q_min_size) =
     Eigen::VectorXd::Constant(si_index_.slack_q_min_size, slack_penalty_);
   q_ds_.segment(si_index_.slack_q_max_start, si_index_.slack_q_max_size) =
@@ -140,18 +139,16 @@ void QPIK::setCost()
   }
 }
 
-void QPIK::setBoundConstraint()
+void AIWorkerMoveJController::setBoundConstraint()
 {
   l_bound_ds_.setConstant(nbc_, -OSQP_INFTY);
   u_bound_ds_.setConstant(nbc_, OSQP_INFTY);
 
-            // Manipulator Joint Velocity Limit
   l_bound_ds_.segment(si_index_.qdot_start, si_index_.qdot_size) =
     robot_data_->getJointVelocityLimit().first;
   u_bound_ds_.segment(si_index_.qdot_start, si_index_.qdot_size) =
     robot_data_->getJointVelocityLimit().second;
 
-            // Slack variables must be non-negative
   l_bound_ds_.segment(si_index_.slack_q_min_start, si_index_.slack_q_min_size).setZero();
   l_bound_ds_.segment(si_index_.slack_q_max_start, si_index_.slack_q_max_size).setZero();
   l_bound_ds_(si_index_.slack_sing_start) = 0.0;
@@ -160,38 +157,38 @@ void QPIK::setBoundConstraint()
   }
 }
 
-void QPIK::setIneqConstraint()
+void AIWorkerMoveJController::setIneqConstraint()
 {
   A_ineq_ds_.setZero(nineqc_, nx_);
   l_ineq_ds_.setConstant(nineqc_, -OSQP_INFTY);
   u_ineq_ds_.setConstant(nineqc_, OSQP_INFTY);
 
-            // Manipulator Joint Angle Limit (CBF)
   const Eigen::VectorXd q_min = robot_data_->getJointPositionLimit().first;
   const Eigen::VectorXd q_max = robot_data_->getJointPositionLimit().second;
   const Eigen::VectorXd q = robot_data_->getJointPosition();
 
-            // Lower bound constraint: qdot + slack >= -alpha*(q - q_min)
-  A_ineq_ds_.block(si_index_.con_q_min_start, si_index_.qdot_start,
-                            si_index_.con_q_min_size, si_index_.qdot_size) =
+  A_ineq_ds_.block(
+    si_index_.con_q_min_start, si_index_.qdot_start,
+    si_index_.con_q_min_size, si_index_.qdot_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_min_size, si_index_.qdot_size);
-  A_ineq_ds_.block(si_index_.con_q_min_start, si_index_.slack_q_min_start,
-                            si_index_.con_q_min_size, si_index_.slack_q_min_size) =
+  A_ineq_ds_.block(
+    si_index_.con_q_min_start, si_index_.slack_q_min_start,
+    si_index_.con_q_min_size, si_index_.slack_q_min_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_min_size, si_index_.slack_q_min_size);
   l_ineq_ds_.segment(si_index_.con_q_min_start, si_index_.con_q_min_size) =
     -cbf_alpha_ * (q - q_min);
 
-            // Upper bound constraint: -qdot + slack >= -alpha*(q_max - q)
-  A_ineq_ds_.block(si_index_.con_q_max_start, si_index_.qdot_start,
-                            si_index_.con_q_max_size, si_index_.qdot_size) =
+  A_ineq_ds_.block(
+    si_index_.con_q_max_start, si_index_.qdot_start,
+    si_index_.con_q_max_size, si_index_.qdot_size) =
     -Eigen::MatrixXd::Identity(si_index_.con_q_max_size, si_index_.qdot_size);
-  A_ineq_ds_.block(si_index_.con_q_max_start, si_index_.slack_q_max_start,
-                            si_index_.con_q_max_size, si_index_.slack_q_max_size) =
+  A_ineq_ds_.block(
+    si_index_.con_q_max_start, si_index_.slack_q_max_start,
+    si_index_.con_q_max_size, si_index_.slack_q_max_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_max_size, si_index_.slack_q_max_size);
   l_ineq_ds_.segment(si_index_.con_q_max_start, si_index_.con_q_max_size) =
     -cbf_alpha_ * (q_max - q);
 
-            // self collision avoidance (CBF)
   if (si_index_.con_sel_col_size > 0) {
     const auto pair_results = robot_data_->getCollisionPairDistances(true, false, false);
     const int pair_count = std::min<int>(si_index_.con_sel_col_size, pair_results.size());
@@ -211,7 +208,7 @@ void QPIK::setIneqConstraint()
   }
 }
 
-void QPIK::setEqConstraint()
+void AIWorkerMoveJController::setEqConstraint()
 {
   A_eq_ds_.setZero(neqc_, nx_);
   b_eq_ds_.setZero(neqc_);

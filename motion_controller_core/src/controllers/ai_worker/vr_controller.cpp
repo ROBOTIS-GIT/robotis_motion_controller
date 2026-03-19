@@ -14,35 +14,21 @@
 //
 // Author: Yeonguk Kim
 
-#include "motion_controller_core/controllers/open_manipulator/open_manipulator_controller.hpp"
+#include "motion_controller_core/controllers/ai_worker/vr_controller.hpp"
 
 #include <algorithm>
-#include <stdexcept>
 
 namespace motion_controller
 {
 namespace controllers
 {
-OpenManipulatorController::OpenManipulatorController(
+
+VRController::VRController(
   std::shared_ptr<motion_controller::kinematics::KinematicsSolver> robot_data,
-  const std::string & controlled_link,
-  double dt)
-: motion_controller::optimization::QPBase(),
-  robot_data_(std::move(robot_data)),
-  controlled_link_(controlled_link),
-  dt_(dt),
-  joint_dof_(0),
-  slack_penalty_(1000.0),
-  cbf_alpha_(5.0),
-  collision_buffer_(0.05),
-  collision_safe_distance_(0.02)
+  const double dt)
+: motion_controller::optimization::QPBase(), robot_data_(robot_data), dt_(dt)
 {
   joint_dof_ = robot_data_->getDof();
-
-  if (!controlled_link_.empty() && !robot_data_->hasLinkFrame(controlled_link_)) {
-    throw std::runtime_error(
-                "Controlled link '" + controlled_link_ + "' does not exist in the model.");
-  }
 
   si_index_.qdot_size = joint_dof_;
   si_index_.slack_q_min_size = joint_dof_;
@@ -64,8 +50,9 @@ OpenManipulatorController::OpenManipulatorController(
     si_index_.con_q_max_size +
     si_index_.con_sing_size +
     si_index_.con_sel_col_size;
+  const int neq = 0;
 
-  QPBase::setQPsize(nx, nbound, nineq, 0);
+  QPBase::setQPsize(nx, nbound, nineq, neq);
 
   si_index_.qdot_start = 0;
   si_index_.slack_q_min_start = si_index_.qdot_start + si_index_.qdot_size;
@@ -77,41 +64,38 @@ OpenManipulatorController::OpenManipulatorController(
   si_index_.con_sing_start = si_index_.con_q_max_start + si_index_.con_q_max_size;
   si_index_.con_sel_col_start = si_index_.con_sing_start + si_index_.con_sing_size;
 
-  task_xdot_desired_.setZero();
-  task_tracking_weight_.setOnes();
-  damping_weight_.setOnes(joint_dof_);
+  w_damping_.setOnes(joint_dof_);
 }
 
-void OpenManipulatorController::setControlledLink(const std::string & controlled_link)
+void VRController::setDesiredTaskVel(
+  const std::map<std::string, motion_controller::common::Vector6d> & link_xdot_desired)
 {
-  if (!controlled_link.empty() && !robot_data_->hasLinkFrame(controlled_link)) {
-    throw std::runtime_error(
-                "Controlled link '" + controlled_link + "' does not exist in the model.");
-  }
-  controlled_link_ = controlled_link;
+  link_xdot_desired_ = link_xdot_desired;
 }
 
-void OpenManipulatorController::setDesiredTaskVel(
-  const motion_controller::common::Vector6d & task_xdot_desired)
+bool VRController::getOptJointVel(Eigen::VectorXd & opt_qdot)
 {
-  task_xdot_desired_ = task_xdot_desired;
-}
-
-void OpenManipulatorController::setWeights(
-  const motion_controller::common::Vector6d & task_tracking_weight,
-  const Eigen::VectorXd & damping_weight)
-{
-  task_tracking_weight_ = task_tracking_weight;
-  if (damping_weight.size() == joint_dof_) {
-    damping_weight_ = damping_weight;
+  Eigen::MatrixXd sol;
+  if (!solveQP(sol)) {
+    opt_qdot.setZero();
+    return false;
+  } else {
+    opt_qdot = sol.block(si_index_.qdot_start, 0, si_index_.qdot_size, 1);
+    return true;
   }
 }
 
-void OpenManipulatorController::setControllerParams(
-  double slack_penalty,
-  double cbf_alpha,
-  double buffer_distance,
-  double safe_distance)
+void VRController::setWeight(
+  const std::map<std::string, motion_controller::common::Vector6d> link_w_tracking,
+  const Eigen::VectorXd w_damping)
+{
+  link_w_tracking_ = link_w_tracking;
+  w_damping_ = w_damping;
+}
+
+void VRController::setControllerParams(
+  const double slack_penalty, const double cbf_alpha,
+  const double buffer_distance, const double safe_distance)
 {
   slack_penalty_ = slack_penalty;
   cbf_alpha_ = cbf_alpha;
@@ -119,40 +103,30 @@ void OpenManipulatorController::setControllerParams(
   collision_safe_distance_ = safe_distance;
 }
 
-bool OpenManipulatorController::getOptJointVel(Eigen::VectorXd & opt_qdot)
-{
-  Eigen::MatrixXd sol;
-  if (!solveQP(sol)) {
-    opt_qdot.setZero(joint_dof_);
-    return false;
-  }
-
-  opt_qdot = sol.block(si_index_.qdot_start, 0, si_index_.qdot_size, 1);
-  return true;
-}
-
-void OpenManipulatorController::setCost()
+void VRController::setCost()
 {
   P_ds_.setZero(nx_, nx_);
   q_ds_.setZero(nx_);
 
-  if (!controlled_link_.empty()) {
-    const Eigen::MatrixXd jacobian = robot_data_->getJacobian(controlled_link_);
-    const Eigen::Matrix<double, 6, 6> w_task = task_tracking_weight_.asDiagonal();
+  for (const auto & [link_name, xdot_desired] : link_xdot_desired_) {
+    Eigen::MatrixXd J_i = robot_data_->getJacobian(link_name);
+    motion_controller::common::Vector6d w_tracking = motion_controller::common::Vector6d::Ones();
+
+    auto iter = link_w_tracking_.find(link_name);
+    if (iter != link_w_tracking_.end()) {
+      w_tracking = iter->second;
+    }
+
     P_ds_.block(
-                si_index_.qdot_start,
-                si_index_.qdot_start,
-                si_index_.qdot_size,
-                si_index_.qdot_size) += 2.0 * jacobian.transpose() * w_task * jacobian;
+      si_index_.qdot_start, si_index_.qdot_start, si_index_.qdot_size,
+      si_index_.qdot_size) += 2.0 * J_i.transpose() * w_tracking.asDiagonal() * J_i;
     q_ds_.segment(si_index_.qdot_start, si_index_.qdot_size) +=
-      -2.0 * jacobian.transpose() * w_task * task_xdot_desired_;
+      -2.0 * J_i.transpose() * w_tracking.asDiagonal() * xdot_desired;
   }
 
   P_ds_.block(
-            si_index_.qdot_start,
-            si_index_.qdot_start,
-            si_index_.qdot_size,
-            si_index_.qdot_size) += 2.0 * damping_weight_.asDiagonal();
+    si_index_.qdot_start, si_index_.qdot_start, si_index_.qdot_size,
+    si_index_.qdot_size) += 2.0 * w_damping_.asDiagonal();
 
   q_ds_.segment(si_index_.slack_q_min_start, si_index_.slack_q_min_size) =
     Eigen::VectorXd::Constant(si_index_.slack_q_min_size, slack_penalty_);
@@ -165,7 +139,7 @@ void OpenManipulatorController::setCost()
   }
 }
 
-void OpenManipulatorController::setBoundConstraint()
+void VRController::setBoundConstraint()
 {
   l_bound_ds_.setConstant(nbc_, -OSQP_INFTY);
   u_bound_ds_.setConstant(nbc_, OSQP_INFTY);
@@ -179,12 +153,11 @@ void OpenManipulatorController::setBoundConstraint()
   l_bound_ds_.segment(si_index_.slack_q_max_start, si_index_.slack_q_max_size).setZero();
   l_bound_ds_(si_index_.slack_sing_start) = 0.0;
   if (si_index_.slack_sel_col_size > 0) {
-    l_bound_ds_.segment(si_index_.slack_sel_col_start, si_index_.slack_sel_col_size)
-    .setZero();
+    l_bound_ds_.segment(si_index_.slack_sel_col_start, si_index_.slack_sel_col_size).setZero();
   }
 }
 
-void OpenManipulatorController::setIneqConstraint()
+void VRController::setIneqConstraint()
 {
   A_ineq_ds_.setZero(nineqc_, nx_);
   l_ineq_ds_.setConstant(nineqc_, -OSQP_INFTY);
@@ -195,31 +168,23 @@ void OpenManipulatorController::setIneqConstraint()
   const Eigen::VectorXd q = robot_data_->getJointPosition();
 
   A_ineq_ds_.block(
-            si_index_.con_q_min_start,
-            si_index_.qdot_start,
-            si_index_.con_q_min_size,
-            si_index_.qdot_size) =
+    si_index_.con_q_min_start, si_index_.qdot_start,
+    si_index_.con_q_min_size, si_index_.qdot_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_min_size, si_index_.qdot_size);
   A_ineq_ds_.block(
-            si_index_.con_q_min_start,
-            si_index_.slack_q_min_start,
-            si_index_.con_q_min_size,
-            si_index_.slack_q_min_size) =
+    si_index_.con_q_min_start, si_index_.slack_q_min_start,
+    si_index_.con_q_min_size, si_index_.slack_q_min_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_min_size, si_index_.slack_q_min_size);
   l_ineq_ds_.segment(si_index_.con_q_min_start, si_index_.con_q_min_size) =
     -cbf_alpha_ * (q - q_min);
 
   A_ineq_ds_.block(
-            si_index_.con_q_max_start,
-            si_index_.qdot_start,
-            si_index_.con_q_max_size,
-            si_index_.qdot_size) =
+    si_index_.con_q_max_start, si_index_.qdot_start,
+    si_index_.con_q_max_size, si_index_.qdot_size) =
     -Eigen::MatrixXd::Identity(si_index_.con_q_max_size, si_index_.qdot_size);
   A_ineq_ds_.block(
-            si_index_.con_q_max_start,
-            si_index_.slack_q_max_start,
-            si_index_.con_q_max_size,
-            si_index_.slack_q_max_size) =
+    si_index_.con_q_max_start, si_index_.slack_q_max_start,
+    si_index_.con_q_max_size, si_index_.slack_q_max_size) =
     Eigen::MatrixXd::Identity(si_index_.con_q_max_size, si_index_.slack_q_max_size);
   l_ineq_ds_.segment(si_index_.con_q_max_start, si_index_.con_q_max_size) =
     -cbf_alpha_ * (q_max - q);
@@ -229,15 +194,11 @@ void OpenManipulatorController::setIneqConstraint()
     const int pair_count = std::min<int>(si_index_.con_sel_col_size, pair_results.size());
     for (int i = 0; i < pair_count; ++i) {
       const auto & res = pair_results[i];
-      A_ineq_ds_.block(
-                    si_index_.con_sel_col_start + i,
-                    si_index_.qdot_start,
-                    1,
-                    si_index_.qdot_size) = res.grad.transpose();
+      A_ineq_ds_.block(si_index_.con_sel_col_start + i, si_index_.qdot_start, 1,
+            si_index_.qdot_size) =
+        res.grad.transpose();
       if (si_index_.slack_sel_col_size > 0 && i < si_index_.slack_sel_col_size) {
-        A_ineq_ds_(
-                        si_index_.con_sel_col_start + i,
-                        si_index_.slack_sel_col_start + i) = 1.0;
+        A_ineq_ds_(si_index_.con_sel_col_start + i, si_index_.slack_sel_col_start + i) = 1.0;
       }
       if (res.distance <= collision_buffer_) {
         l_ineq_ds_(si_index_.con_sel_col_start + i) =
@@ -247,10 +208,11 @@ void OpenManipulatorController::setIneqConstraint()
   }
 }
 
-void OpenManipulatorController::setEqConstraint()
+void VRController::setEqConstraint()
 {
   A_eq_ds_.setZero(neqc_, nx_);
   b_eq_ds_.setZero(neqc_);
 }
+
 }  // namespace controllers
 }  // namespace motion_controller

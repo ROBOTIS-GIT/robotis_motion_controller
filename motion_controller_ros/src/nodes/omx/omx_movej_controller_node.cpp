@@ -58,7 +58,7 @@ OmxMoveJControllerNode::OmxMoveJControllerNode()
       std::string("~/controller_error"));
 
   if (urdf_path_.empty()) {
-    RCLCPP_FATAL(this->get_logger(), "The 'urdf_path' parameter must be provided.");
+    RCLCPP_FATAL(this->get_logger(), "URDF path not provided.");
     rclcpp::shutdown();
     return;
   }
@@ -84,10 +84,8 @@ OmxMoveJControllerNode::OmxMoveJControllerNode()
     } else {
       RCLCPP_INFO(this->get_logger(), "SRDF path: %s", srdf_path_.c_str());
     }
-    RCLCPP_INFO(this->get_logger(), "Loading URDF and initializing kinematics solver...");
     kinematics_solver_ =
       std::make_shared<motion_controller::kinematics::KinematicsSolver>(urdf_path_, srdf_path_);
-    RCLCPP_INFO(this->get_logger(), "Initializing QP controller...");
     qp_controller_ =
       std::make_shared<motion_controller::controllers::OpenManipulatorMoveJController>(
       kinematics_solver_, time_step_);
@@ -101,9 +99,6 @@ OmxMoveJControllerNode::OmxMoveJControllerNode()
     movej_goal_.setZero(kinematics_solver_->getDof());
 
     initializeJointConfig();
-
-    RCLCPP_INFO(this->get_logger(), "Motion controller initialized (DOF: %d)",
-        kinematics_solver_->getDof());
   } catch (const std::exception & e) {
     RCLCPP_FATAL(this->get_logger(), "Failed to initialize OMX MoveJ Controller: %s", e.what());
     rclcpp::shutdown();
@@ -123,15 +118,6 @@ OmxMoveJControllerNode::OmxMoveJControllerNode()
   }
 
   RCLCPP_INFO(this->get_logger(), "OMX MoveJ Controller initialized successfully!");
-  RCLCPP_INFO(this->get_logger(), "  - Controlled link: %s", controlled_link_.c_str());
-  RCLCPP_INFO(
-            this->get_logger(),
-            "  - Control loop: %.1f Hz (period: %d ms)",
-            control_frequency_,
-            timer_period_ms);
-  RCLCPP_INFO(this->get_logger(), "  - MoveJ command topic: %s", movej_topic_.c_str());
-  RCLCPP_INFO(this->get_logger(), "========================================");
-  RCLCPP_INFO(this->get_logger(), "Node is ready! Waiting for messages...");
 }
 
 OmxMoveJControllerNode::~OmxMoveJControllerNode()
@@ -200,19 +186,48 @@ void OmxMoveJControllerNode::publishCurrentPose(const Eigen::Affine3d & pose) co
 
 void OmxMoveJControllerNode::publishTrajectory(const Eigen::VectorXd & q_command) const
 {
-  trajectory_msgs::msg::JointTrajectory traj_msg;
-  traj_msg.header.frame_id = "";
-  traj_msg.joint_names = model_joint_names_;
+  joint_command_pub_->publish(makeOutputTrajectory(q_command));
+}
 
-  trajectory_msgs::msg::JointTrajectoryPoint point;
-  point.time_from_start = rclcpp::Duration::from_seconds(trajectory_time_);
-  for (int idx = 0; idx < q_command.size(); ++idx) {
-    point.positions.push_back(q_command[idx]);
-    point.velocities.push_back(0.0);
+trajectory_msgs::msg::JointTrajectory OmxMoveJControllerNode::makeOutputTrajectory(
+  const Eigen::VectorXd & q_command) const
+{
+  trajectory_msgs::msg::JointTrajectory traj_msg;
+  if (latest_movej_command_received_) {
+    traj_msg = latest_movej_command_;
+  } else {
+    traj_msg.joint_names = model_joint_names_;
+    traj_msg.points.resize(1);
   }
 
-  traj_msg.points.push_back(point);
-  joint_command_pub_->publish(traj_msg);
+  if (traj_msg.points.empty()) {
+    traj_msg.points.resize(1);
+  }
+
+  auto & point = traj_msg.points.front();
+  if (point.positions.size() < traj_msg.joint_names.size()) {
+    point.positions.resize(traj_msg.joint_names.size(), 0.0);
+  }
+  if (!point.velocities.empty() && point.velocities.size() < traj_msg.joint_names.size()) {
+    point.velocities.resize(traj_msg.joint_names.size(), 0.0);
+  }
+  point.time_from_start = rclcpp::Duration::from_seconds(trajectory_time_);
+
+  for (size_t i = 0; i < traj_msg.joint_names.size(); ++i) {
+    const auto model_it = model_joint_index_map_.find(traj_msg.joint_names[i]);
+    if (model_it == model_joint_index_map_.end()) {
+      continue;
+    }
+    const int model_idx = model_it->second;
+    if (model_idx >= 0 && model_idx < q_command.size()) {
+      point.positions[i] = q_command[model_idx];
+      if (!point.velocities.empty()) {
+        point.velocities[i] = 0.0;
+      }
+    }
+  }
+
+  return traj_msg;
 }
 
 void OmxMoveJControllerNode::publishControllerError(const std::string & error) const
@@ -242,8 +257,8 @@ void OmxMoveJControllerNode::jointStateCallback(const sensor_msgs::msg::JointSta
     movej_start_ = q_;
     movej_goal_ = q_;
     commanded_state_initialized_ = true;
-    movej_target_initialized_ = true;
-    RCLCPP_INFO(this->get_logger(), "Initial joint state captured for moveJ control.");
+    RCLCPP_INFO(this->get_logger(),
+        "OMX MoveJ Controller activated. Waiting for moveJ commands...");
   }
 }
 
@@ -298,6 +313,8 @@ void OmxMoveJControllerNode::moveJCallback(
   motion_start_time_ = this->now();
   movej_target_initialized_ = true;
   movej_trajectory_active_ = true;
+  latest_movej_command_ = *msg;
+  latest_movej_command_received_ = true;
 
   RCLCPP_INFO(
             this->get_logger(),
@@ -307,12 +324,21 @@ void OmxMoveJControllerNode::moveJCallback(
 
 void OmxMoveJControllerNode::controlLoopCallback()
 {
-  if (!joint_state_received_ || !commanded_state_initialized_ || !movej_target_initialized_) {
+  if (!joint_state_received_ || !commanded_state_initialized_) {
     RCLCPP_WARN_THROTTLE(
                 this->get_logger(),
                 *this->get_clock(),
                 2000,
                 "Control loop waiting for joint states...");
+    return;
+  }
+
+  if (!movej_target_initialized_) {
+    RCLCPP_WARN_THROTTLE(
+                this->get_logger(),
+                *this->get_clock(),
+                2000,
+                "Controller activated. Waiting for moveJ commands...");
     return;
   }
 
