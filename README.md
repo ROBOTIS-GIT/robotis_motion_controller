@@ -153,13 +153,7 @@ sudo apt install -y ros-jazzy-pinocchio
 ### Install NLopt (for retargeting)
 
 ```bash
-pip3 install nlopt
-```
-
-### Install PyTorch (for retargeting)
-
-```bash
-pip3 install torch
+sudo apt install python3-nlopt
 ```
 
 ### Build in a ROS 2 workspace
