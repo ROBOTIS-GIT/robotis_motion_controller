@@ -338,7 +338,6 @@ class DexPilotOptimizer:
             origin_pos = body_pos[self.origin_link_indices, :]
             task_pos = body_pos[self.task_link_indices, :]
             robot_vec = task_pos - origin_pos
-            len_proj = self.num_fingers * (self.num_fingers - 1) // 2
             num_robot_vecs = len(self.origin_link_indices)
             vec_diff = robot_vec - target_vec[:num_robot_vecs]
             vec_dist = np.linalg.norm(vec_diff, axis=1)
@@ -371,7 +370,7 @@ class DexPilotOptimizer:
                 vec_dist_grad[~mask_quadratic] = (
                     self.huber_delta * np.sign(vec_dist[~mask_quadratic])
                 )
-                
+
                 # Gradient w.r.t. vec_diff
                 vec_dist_normalized = vec_dist + 1e-8
                 vec_diff_grad = (
@@ -379,7 +378,7 @@ class DexPilotOptimizer:
                 )
                 num_robot_vecs = len(self.origin_link_indices)
                 vec_diff_grad *= weight_array[:num_robot_vecs, None] / num_vec
-                
+
                 # Gradient w.r.t. body_pos
                 grad_pos = np.zeros_like(body_pos)
                 for i, (origin_idx, task_idx) in enumerate(
@@ -395,24 +394,24 @@ class DexPilotOptimizer:
                     for i, (prox_idx, tip_idx) in enumerate(
                         zip(self.proximal_indices, self.tip_indices)
                     ):
-                        r_dir_i = r_dir[i, :]
                         r_dir_norm_i = r_dir_norm[i, :]
                         target_dir_i = target_dir_array[i, :]
-                        
+
                         # Gradient of (1 - cos_sim) w.r.t. r_dir
                         # cos_sim = (r_dir_norm * target_dir).sum()
                         # d/dr_dir (1 - cos_sim) = -d/dr_dir cos_sim
                         r_dir_norm_val_i = r_dir_norm_val[i, 0]
-                        
+
                         # Gradient of normalized direction
-                        # d/dr_dir (r_dir / ||r_dir||) = (I - r_dir_norm @ r_dir_norm^T) / ||r_dir||
+                        # d/dr_dir (r_dir / ||r_dir||) =
+                        # (I - r_dir_norm @ r_dir_norm^T) / ||r_dir||
                         identity = np.eye(3)
                         proj_matrix = np.outer(r_dir_norm_i, r_dir_norm_i)
                         norm_grad = (identity - proj_matrix) / r_dir_norm_val_i
-                        
+
                         # Gradient of cos_sim w.r.t. r_dir
                         cos_sim_grad = norm_grad @ target_dir_i
-                        
+
                         # Gradient w.r.t. body_pos
                         grad_pos[tip_idx, :] -= cos_sim_grad * self.orientation_weight
                         grad_pos[prox_idx, :] += cos_sim_grad * self.orientation_weight
