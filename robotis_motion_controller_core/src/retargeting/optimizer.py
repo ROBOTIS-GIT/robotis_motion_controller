@@ -19,12 +19,9 @@
 from typing import Callable, List, Optional, Tuple
 
 import nlopt
-
 import numpy as np
 
 from retargeting.robot_wrapper import RobotWrapper
-
-import torch
 
 
 class DexPilotOptimizer:
@@ -307,20 +304,23 @@ class DexPilotOptimizer:
             [reference_vec_proj, normal_vec[len_proj:]],
             axis=0,
         ).astype(np.float64)
-        torch_target_vec = torch.as_tensor(reference_vec, dtype=torch.float32)
-        torch_target_vec.requires_grad_(False)
+        target_vec = reference_vec.astype(np.float32)
 
         num_vec = reference_vec.shape[0]
-        torch_weight = torch.as_tensor(weight, dtype=torch.float32)
-        torch_target_dir = (
-            torch.as_tensor(target_dir, dtype=torch.float32)
+        weight_array = weight.astype(np.float32)
+        target_dir_array = (
+            np.asarray(target_dir, dtype=np.float32)
             if target_dir is not None
             else None
         )
-        huber_loss = torch.nn.SmoothL1Loss(
-            beta=self.huber_delta,
-            reduction='none',
-        )
+
+        def huber_loss(x: np.ndarray, y: np.ndarray, delta: float) -> np.ndarray:
+            """Compute Huber loss (Smooth L1 loss) element-wise."""
+            diff = x - y
+            abs_diff = np.abs(diff)
+            quadratic = 0.5 * diff ** 2
+            linear = delta * (abs_diff - 0.5 * delta)
+            return np.where(abs_diff < delta, quadratic, linear)
 
         def objective(x: np.ndarray, grad_out: np.ndarray) -> float:
             qpos = np.asarray(x, dtype=np.float64)
@@ -335,38 +335,88 @@ class DexPilotOptimizer:
                 axis=0,
             ).astype(np.float32)
 
-            torch_body_pos = torch.as_tensor(body_pos)
-            torch_body_pos.requires_grad_(True)
-
-            origin_pos = torch_body_pos[self.origin_link_indices, :]
-            task_pos = torch_body_pos[self.task_link_indices, :]
+            origin_pos = body_pos[self.origin_link_indices, :]
+            task_pos = body_pos[self.task_link_indices, :]
             robot_vec = task_pos - origin_pos
-            vec_dist = torch.norm(robot_vec - torch_target_vec, dim=1)
-            huber_per_vec = huber_loss(vec_dist, torch.zeros_like(vec_dist))
-            pos_loss = (huber_per_vec * torch_weight).sum() / num_vec
+            len_proj = self.num_fingers * (self.num_fingers - 1) // 2
+            vec_diff = robot_vec - target_vec[:len_proj]
+            vec_dist = np.linalg.norm(vec_diff, axis=1)
+            huber_per_vec = huber_loss(vec_dist, np.zeros_like(vec_dist), self.huber_delta)
+            pos_loss = (huber_per_vec * weight_array[:len_proj]).sum() / num_vec
 
-            if torch_target_dir is not None:
-                r_prox = torch_body_pos[self.proximal_indices, :]
-                r_tip = torch_body_pos[self.tip_indices, :]
+            if target_dir_array is not None:
+                r_prox = body_pos[self.proximal_indices, :]
+                r_tip = body_pos[self.tip_indices, :]
                 r_dir = r_tip - r_prox
-                r_dir_norm_val = torch.norm(r_dir, dim=1, keepdim=True).clamp(
-                    min=1e-6
-                )
+                r_dir_norm_val = np.linalg.norm(r_dir, axis=1, keepdims=True)
+                r_dir_norm_val = np.clip(r_dir_norm_val, a_min=1e-6, a_max=None)
                 r_dir_norm = r_dir / r_dir_norm_val
-                cos_sim = (r_dir_norm * torch_target_dir).sum(dim=1)
+                cos_sim = (r_dir_norm * target_dir_array).sum(axis=1)
                 dir_loss = (1.0 - cos_sim).sum() * self.orientation_weight
             else:
-                dir_loss = torch.tensor(0.0, dtype=torch.float32)
+                dir_loss = 0.0
 
-            reg_loss = self.norm_delta * (
-                torch.as_tensor(qpos - last_qpos) ** 2
-            ).sum()
+            reg_loss = self.norm_delta * ((qpos - last_qpos) ** 2).sum()
             total_loss = pos_loss + dir_loss + reg_loss
-            result = total_loss.cpu().detach().item()
+            result = float(total_loss)
 
             if grad_out.size > 0:
-                total_loss.backward()
-                grad_pos = torch_body_pos.grad.cpu().numpy()[:, None, :]
+                # Compute gradient for position loss
+                # Gradient of Huber loss w.r.t. vec_dist
+                vec_dist_grad = np.zeros_like(vec_dist)
+                abs_diff = np.abs(vec_dist)
+                mask_quadratic = abs_diff < self.huber_delta
+                vec_dist_grad[mask_quadratic] = vec_dist[mask_quadratic]
+                vec_dist_grad[~mask_quadratic] = (
+                    self.huber_delta * np.sign(vec_dist[~mask_quadratic])
+                )
+                
+                # Gradient w.r.t. vec_diff
+                vec_dist_normalized = vec_dist + 1e-8
+                vec_diff_grad = (
+                    vec_dist_grad[:, None] * vec_diff / vec_dist_normalized[:, None]
+                )
+                vec_diff_grad *= weight_array[:len_proj, None] / num_vec
+                
+                # Gradient w.r.t. body_pos
+                grad_pos = np.zeros_like(body_pos)
+                for i, (origin_idx, task_idx) in enumerate(
+                    zip(self.origin_link_indices, self.task_link_indices)
+                ):
+                    # task_pos contributes positively
+                    grad_pos[task_idx, :] += vec_diff_grad[i, :]
+                    # origin_pos contributes negatively
+                    grad_pos[origin_idx, :] -= vec_diff_grad[i, :]
+
+                # Compute gradient for direction loss
+                if target_dir_array is not None:
+                    for i, (prox_idx, tip_idx) in enumerate(
+                        zip(self.proximal_indices, self.tip_indices)
+                    ):
+                        r_dir_i = r_dir[i, :]
+                        r_dir_norm_i = r_dir_norm[i, :]
+                        target_dir_i = target_dir_array[i, :]
+                        
+                        # Gradient of (1 - cos_sim) w.r.t. r_dir
+                        # cos_sim = (r_dir_norm * target_dir).sum()
+                        # d/dr_dir (1 - cos_sim) = -d/dr_dir cos_sim
+                        r_dir_norm_val_i = r_dir_norm_val[i, 0]
+                        
+                        # Gradient of normalized direction
+                        # d/dr_dir (r_dir / ||r_dir||) = (I - r_dir_norm @ r_dir_norm^T) / ||r_dir||
+                        identity = np.eye(3)
+                        proj_matrix = np.outer(r_dir_norm_i, r_dir_norm_i)
+                        norm_grad = (identity - proj_matrix) / r_dir_norm_val_i
+                        
+                        # Gradient of cos_sim w.r.t. r_dir
+                        cos_sim_grad = norm_grad @ target_dir_i
+                        
+                        # Gradient w.r.t. body_pos
+                        grad_pos[tip_idx, :] -= cos_sim_grad * self.orientation_weight
+                        grad_pos[prox_idx, :] += cos_sim_grad * self.orientation_weight
+
+                # Reshape grad_pos for jacobian multiplication
+                grad_pos = grad_pos[:, None, :]
 
                 jacobians = []
                 for index, link_id in enumerate(self.computed_link_indices):
