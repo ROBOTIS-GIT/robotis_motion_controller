@@ -21,7 +21,7 @@ find_package(interactive_markers REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
-find_package(OsqpEigen REQUIRED)
+find_package(osqp_eigen_vendor REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(robotis_interfaces REQUIRED)
 

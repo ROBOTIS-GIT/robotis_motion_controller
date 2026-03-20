@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
-find_package(OsqpEigen REQUIRED)
+find_package(osqp_eigen_vendor REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 
@@ -89,5 +89,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Release>:-O3>
     $<$<CONFIG:Debug>:-g -O0>
 )
+
+ament_export_dependencies(Eigen3 pinocchio osqp_eigen_vendor)
 
 ament_package()

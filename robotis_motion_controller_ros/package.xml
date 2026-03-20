@@ -24,7 +24,8 @@
   <!-- Build dependencies -->
   <build_depend>eigen</build_depend>
   <build_depend>pinocchio</build_depend>
-  <build_depend>osqp-eigen</build_depend>
+  <build_depend>osqp_eigen_vendor</build_depend>
+  <exec_depend>osqp_eigen_vendor</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   <export>

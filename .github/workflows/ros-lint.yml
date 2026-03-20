@@ -1,9 +1,14 @@
+# The name of the workflow
 name: Lint
+
+# Specifies the events that trigger the workflow
 on:
   pull_request:
+
+# Defines a set of jobs to be run as part of the workflow
 jobs:
   ament_lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     container:
       image: rostooling/setup-ros-docker:ubuntu-noble-ros-rolling-ros-base-latest
     strategy:
@@ -25,8 +30,9 @@ jobs:
           linter: ${{ matrix.linter }}
           distribution: rolling
           package-name: |
-            motion_controller
-            motion_controller_core
-            motion_controller_models
-            motion_controller_ros
-            motion_controller_ros_py
+            robotis_motion_controller
+            osqp_eigen_vendor
+            robotis_motion_controller_core
+            robotis_motion_controller_models
+            robotis_motion_controller_ros
+            robotis_motion_controller_ros_py

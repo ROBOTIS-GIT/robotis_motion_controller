@@ -4,7 +4,7 @@ include(CMakeFindDependencyMacro)
 
 find_dependency(Eigen3 REQUIRED)
 find_dependency(pinocchio REQUIRED)
-find_dependency(OsqpEigen REQUIRED)
+find_dependency(osqp_eigen_vendor REQUIRED)
 
 set(robotis_motion_controller_core_INCLUDE_DIRS "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@")
 
