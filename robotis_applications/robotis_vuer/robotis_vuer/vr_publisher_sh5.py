@@ -136,15 +136,19 @@ class VRTrajectoryPublisher(Node):
         self.get_logger().set_level(rclpy.logging.LoggingSeverity.INFO)
 
         # Lift and base (whole-body) parameters
-        self.declare_parameter('enable_lift_publishing', True)
+        # self.declare_parameter('enable_lift_publishing', True)
+        self.declare_parameter('enable_lift_publishing', False)
         self.declare_parameter('enable_head_publishing', False)
-        self.declare_parameter('enable_base_publishing', True)
+        # self.declare_parameter('enable_base_publishing', True)
+        self.declare_parameter('enable_base_publishing', False)
         self.declare_parameter('enable_vr_image', False)
 
         self.declare_parameter('base_linear_kp', 1.7)
         self.declare_parameter('base_angular_kp', 2.0)
-        self.declare_parameter('base_linear_deadzone', 0.1)
-        self.declare_parameter('base_angular_deadzone', 0.05)
+        # self.declare_parameter('base_linear_deadzone', 0.1)
+        self.declare_parameter('base_linear_deadzone', 10000.0)
+        # self.declare_parameter('base_angular_deadzone', 0.05)
+        self.declare_parameter('base_angular_deadzone', 10000.0)
         self.declare_parameter('base_max_linear_velocity', 0.3)
         self.declare_parameter('base_max_angular_velocity', 0.5)
         self.declare_parameter('enable_base_debug_topics', False)
@@ -229,6 +233,7 @@ class VRTrajectoryPublisher(Node):
         self.declare_parameter('elbow_offset_x', 0.0)
         self.declare_parameter('elbow_offset_y', 0.0)
         self.declare_parameter('elbow_offset_z', 0.0)
+        self.declare_parameter('mirror_mode', False)
 
         self.enable_vr_image = (
             self.get_parameter('enable_vr_image')
@@ -259,6 +264,8 @@ class VRTrajectoryPublisher(Node):
             f'base_linear_kp={self.base_linear_kp}, base_angular_kp={self.base_angular_kp}, '
             f'base_debug_topics={self.enable_base_debug_topics}, vr_image={self.enable_vr_image}'
         )
+        self.mirror_mode = bool(self.get_parameter('mirror_mode').value)
+        self.get_logger().info(f'Mirror mode: {self.mirror_mode}')
 
         # VR publishing control flag
         self.vr_publishing_enabled = False
@@ -560,6 +567,35 @@ class VRTrajectoryPublisher(Node):
         vr_status = 'ENABLED' if self.vr_publishing_enabled else 'DISABLED'
         self.get_logger().info(f'Status: VR={vr_status}')
 
+    def get_output_side(self, side):
+        """Return the output arm side for a VR input side."""
+        if not self.mirror_mode:
+            return side
+        if side == 'left':
+            return 'right'
+        if side == 'right':
+            return 'left'
+        return side
+
+    def mirror_position_in_base(self, position):
+        """Mirror a base_link position for face-to-face teleoperation."""
+        mirrored = np.array(position, dtype=np.float64, copy=True)
+        mirrored[1] = -mirrored[1]
+        return mirrored
+
+    def mirror_quaternion_in_base(self, quaternion):
+        """Mirror a base_link orientation for face-to-face teleoperation."""
+        reflection = np.diag([1.0, -1.0, 1.0])
+        rotation = R.from_quat(quaternion).as_matrix()
+        mirrored_rotation = reflection @ rotation @ reflection
+        return R.from_matrix(mirrored_rotation).as_quat()
+
+    def mirror_hand_retarget_points(self, points):
+        """Mirror hand landmarks for opposite-side retargeting."""
+        mirrored = np.array(points, dtype=np.float64, copy=True)
+        mirrored[:, 1] = -mirrored[:, 1]
+        return mirrored
+
     def left_image_callback(self, msg):
         """Store latest left eye image for VR background (only when enable_vr_image)."""
         if not self.enable_vr_image:
@@ -805,6 +841,10 @@ class VRTrajectoryPublisher(Node):
             camera_relative_rotation = camera_relative_rotation * rot_z_180
         arm_quaternion = camera_relative_rotation.as_quat()
 
+        if self.mirror_mode and side in ('left', 'right'):
+            base_position = self.mirror_position_in_base(base_position)
+            arm_quaternion = self.mirror_quaternion_in_base(arm_quaternion)
+
         pose_key = f'{side}_{pose_role}' if side else pose_role
         base_position, arm_quaternion = self.low_pass_filter_pose(
             pose_key,
@@ -928,6 +968,7 @@ class VRTrajectoryPublisher(Node):
         """Process VR hand data (retarget) and publish HandJoints + wrist target pose."""
         if hand_data is None or len(hand_data) != 400:
             return
+        output_side = self.get_output_side(side)
 
         hand_joints = HandJoints()
         hand_joints.header.stamp = self.get_clock().now().to_msg()
@@ -995,8 +1036,14 @@ class VRTrajectoryPublisher(Node):
                 )
             self.prev_poses_left[:] = temp_joints
             self.start_poses_left = True
-            wrist_publisher = self.left_wrist_rviz_pub
-            hand_publisher = self.left_hand_pos_pub
+            wrist_publisher = (
+                self.left_wrist_rviz_pub
+                if output_side == 'left' else self.right_wrist_rviz_pub
+            )
+            hand_publisher = (
+                self.left_hand_pos_pub
+                if output_side == 'left' else self.right_hand_pos_pub
+            )
         elif side == 'right':
             if self.start_poses_right:
                 temp_joints = (
@@ -1005,13 +1052,21 @@ class VRTrajectoryPublisher(Node):
                 )
             self.prev_poses_right[:] = temp_joints
             self.start_poses_right = True
-            wrist_publisher = self.right_wrist_rviz_pub
-            hand_publisher = self.right_hand_pos_pub
+            wrist_publisher = (
+                self.left_wrist_rviz_pub
+                if output_side == 'left' else self.right_wrist_rviz_pub
+            )
+            hand_publisher = (
+                self.left_hand_pos_pub
+                if output_side == 'left' else self.right_hand_pos_pub
+            )
         else:
             return
 
         rel_points = temp_joints - temp_joints[0]
         retarget_points = (self.vr_hand_to_urdf @ (wrist_rot.T @ rel_points.T)).T
+        if self.mirror_mode and output_side != side:
+            retarget_points = self.mirror_hand_retarget_points(retarget_points)
         for p in retarget_points:
             msg_p = Point32()
             msg_p.x = float(p[0])
@@ -1029,7 +1084,7 @@ class VRTrajectoryPublisher(Node):
             z_offset=self.wrist_offsets['z'],
             apply_right_z_flip=(side == 'right'),
             pose_role='wrist',
-            side=side,
+            side=output_side,
         )
         hand_publisher.publish(hand_joints)
 
@@ -1449,6 +1504,8 @@ class VRTrajectoryPublisher(Node):
 
     def publish_body_joint_pose(self, joint_matrix, publisher, side=''):
         """Publish PoseStamped for a body joint (elbow)."""
+        output_side = self.get_output_side(side)
+        publisher = self.left_elbow_pub if output_side == 'left' else self.right_elbow_pub
         relative_joint_matrix = self.head_inverse_matrix @ joint_matrix
         pos_head, quat_head = self.matrix_to_pose(relative_joint_matrix)
         if not (np.all(np.isfinite(pos_head)) and np.all(np.isfinite(quat_head))):
@@ -1469,7 +1526,7 @@ class VRTrajectoryPublisher(Node):
             z_offset=self.elbow_offsets['z'],
             apply_right_z_flip=False,
             pose_role='elbow',
-            side=side,
+            side=output_side,
         )
 
     def low_pass_filter_pose(self, key, position, quaternion, max_angle_deg=None):

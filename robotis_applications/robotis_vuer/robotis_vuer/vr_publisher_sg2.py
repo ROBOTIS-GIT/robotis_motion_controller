@@ -76,6 +76,7 @@ class VRTrajectoryPublisher(Node):
         self.declare_parameter('pose_publish_hz', 30.0)
         self.declare_parameter('apply_lift_to_arm_z', True)
         self.declare_parameter('lift_to_arm_z_scale', 1.0)
+        self.declare_parameter('mirror_mode', False)
         self.declare_parameter('left_elbow_offset_x', 0.0)
         self.declare_parameter('left_elbow_offset_y', 0.0)
         self.declare_parameter('left_elbow_offset_z', 0.0)
@@ -387,6 +388,8 @@ class VRTrajectoryPublisher(Node):
             f'Lift->arm Z coupling: enabled={self.apply_lift_to_arm_z}, '
             f'scale={self.lift_to_arm_z_scale:.3f}'
         )
+        self.mirror_mode = bool(self.get_parameter('mirror_mode').value)
+        self.get_logger().info(f'Mirror mode: {self.mirror_mode}')
 
     def vr_control_callback(self, msg):
         """Enable/disable VR publishing based on message content."""
@@ -563,6 +566,45 @@ class VRTrajectoryPublisher(Node):
             self.right_squeeze_value >= self.goal_pose_squeeze_threshold
         )
 
+    def get_output_side(self, side):
+        """Return the output arm side for a VR input side."""
+        if not self.mirror_mode:
+            return side
+        if side == 'left':
+            return 'right'
+        if side == 'right':
+            return 'left'
+        return side
+
+    def get_squeeze_publisher(self, side):
+        """Return the squeeze publisher for a VR input side."""
+        output_side = self.get_output_side(side)
+        return self.left_squeeze_pub if output_side == 'left' else self.right_squeeze_pub
+
+    def get_trigger_publisher(self, side):
+        """Return the trigger publisher for a VR input side."""
+        output_side = self.get_output_side(side)
+        return self.left_trigger_pub if output_side == 'left' else self.right_trigger_pub
+
+    def mirror_position_in_base(self, position):
+        """Mirror a base_link position for face-to-face teleoperation."""
+        mirrored = np.array(position, dtype=np.float64, copy=True)
+        mirrored[1] = -mirrored[1]
+        return mirrored
+
+    def mirror_quaternion_in_base(self, quaternion):
+        """Mirror a base_link orientation for face-to-face teleoperation."""
+        reflection = np.diag([1.0, -1.0, 1.0])
+        rotation = R.from_quat(quaternion).as_matrix()
+        mirrored_rotation = reflection @ rotation @ reflection
+        return R.from_matrix(mirrored_rotation).as_quat()
+
+    def apply_mirror_wrist_compensation(self, rotation_ros):
+        """Compensate mirrored wrist orientation around local wrist X."""
+        if not self.mirror_mode:
+            return rotation_ros
+        return rotation_ros * R.from_euler('x', 180.0, degrees=True)
+
     def apply_wrist_offsets(self, side, position_ros, rotation_ros):
         """Apply per-hand offsets after VR->ROS conversion."""
         side_key = side if side in ('left', 'right') else 'left'
@@ -595,7 +637,9 @@ class VRTrajectoryPublisher(Node):
         try:
             if not self.can_publish_goal_pose():
                 return
-            pose_key = f'{side}_wrist'
+            output_side = self.get_output_side(side)
+            wrist_offset_side = side if self.mirror_mode else output_side
+            pose_key = f'{output_side}_wrist'
             now_sec = self.get_clock().now().nanoseconds / 1e9
             if (self.pose_min_period > 0.0 and
                     (now_sec - self.last_pose_publish_sec[pose_key])
@@ -610,6 +654,9 @@ class VRTrajectoryPublisher(Node):
                 relative_pos_head, relative_quat_head
             )
             relative_pos_ros = self.scale_goal_position(relative_pos_ros)
+            if self.mirror_mode:
+                relative_pos_ros = self.mirror_position_in_base(relative_pos_ros)
+                relative_quat_ros = self.mirror_quaternion_in_base(relative_quat_ros)
             relative_rot_ros = R.from_quat(relative_quat_ros)
 
             # 1) Coordinate conversion 2) camera->base shift 3) user-configurable offsets
@@ -617,8 +664,9 @@ class VRTrajectoryPublisher(Node):
             base_position = base_position.copy()
             base_position[2] += self.get_lift_z_delta_for_arm_pose()
             base_position, base_rotation = self.apply_wrist_offsets(
-                side, base_position, relative_rot_ros
+                wrist_offset_side, base_position, relative_rot_ros
             )
+            base_rotation = self.apply_mirror_wrist_compensation(base_rotation)
             arm_quaternion = base_rotation.as_quat()  # [x, y, z, w]
 
             wrist_pose = PoseStamped()
@@ -631,9 +679,9 @@ class VRTrajectoryPublisher(Node):
                 arm_quaternion[0], arm_quaternion[1], arm_quaternion[2], arm_quaternion[3]
             )
 
-            if side == 'left':
+            if output_side == 'left':
                 self.left_wrist_rviz_pub.publish(wrist_pose)
-            elif side == 'right':
+            elif output_side == 'right':
                 self.right_wrist_rviz_pub.publish(wrist_pose)
             self.last_pose_publish_sec[pose_key] = now_sec
 
@@ -645,7 +693,8 @@ class VRTrajectoryPublisher(Node):
         try:
             if not self.can_publish_goal_pose():
                 return
-            pose_key = f'{side}_elbow'
+            output_side = self.get_output_side(side)
+            pose_key = f'{output_side}_elbow'
             now_sec = self.get_clock().now().nanoseconds / 1e9
             if (self.pose_min_period > 0.0 and
                     (now_sec - self.last_pose_publish_sec[pose_key])
@@ -660,12 +709,15 @@ class VRTrajectoryPublisher(Node):
                 relative_pos_head, relative_quat_head
             )
             relative_pos_ros = self.scale_goal_position(relative_pos_ros)
+            if self.mirror_mode:
+                relative_pos_ros = self.mirror_position_in_base(relative_pos_ros)
+                relative_quat_ros = self.mirror_quaternion_in_base(relative_quat_ros)
             elbow_rotation = R.from_quat(relative_quat_ros)
 
             base_position = relative_pos_ros - self.camera_to_base_offset
             base_position = base_position.copy()
             base_position[2] += self.get_lift_z_delta_for_arm_pose()
-            side_key = side if side in ('left', 'right') else 'left'
+            side_key = output_side if output_side in ('left', 'right') else 'left'
             base_position = base_position + self.elbow_position_offsets[side_key]
             elbow_quaternion = elbow_rotation.as_quat()
 
@@ -679,9 +731,9 @@ class VRTrajectoryPublisher(Node):
                 elbow_quaternion[0], elbow_quaternion[1], elbow_quaternion[2], elbow_quaternion[3]
             )
 
-            if side == 'left':
+            if output_side == 'left':
                 self.left_elbow_rviz_pub.publish(elbow_pose)
-            elif side == 'right':
+            elif output_side == 'right':
                 self.right_elbow_rviz_pub.publish(elbow_pose)
             self.last_pose_publish_sec[pose_key] = now_sec
 
@@ -889,6 +941,8 @@ class VRTrajectoryPublisher(Node):
             return
         if not pose_array_msg.poses:
             return
+        output_side = self.get_output_side(hand_name)
+        wrist_offset_side = hand_name if self.mirror_mode else output_side
 
         # Assume the first pose in the array is the wrist pose (head relative, ROS coordinates)
         wrist_pose_relative = pose_array_msg.poses[0]
@@ -908,6 +962,11 @@ class VRTrajectoryPublisher(Node):
             wrist_pose_relative.orientation.z,
             wrist_pose_relative.orientation.w
         ], dtype=np.float64)
+        if self.mirror_mode:
+            camera_relative_position = self.mirror_position_in_base(camera_relative_position)
+            camera_relative_quaternion = self.mirror_quaternion_in_base(
+                camera_relative_quaternion
+            )
 
         # Transform from camera relative coordinates directly to base_link coordinates
         base_position = camera_relative_position - self.camera_to_base_offset
@@ -917,7 +976,10 @@ class VRTrajectoryPublisher(Node):
         # Use camera relative orientation as is
         camera_relative_rotation = R.from_quat(camera_relative_quaternion)
         base_position, camera_relative_rotation = self.apply_wrist_offsets(
-            hand_name, base_position, camera_relative_rotation
+            wrist_offset_side, base_position, camera_relative_rotation
+        )
+        camera_relative_rotation = self.apply_mirror_wrist_compensation(
+            camera_relative_rotation
         )
         arm_quaternion = camera_relative_rotation.as_quat()  # [x, y, z, w]
 
@@ -936,7 +998,12 @@ class VRTrajectoryPublisher(Node):
         target_pose.pose.orientation.z = arm_quaternion[2]
         target_pose.pose.orientation.w = arm_quaternion[3]
 
-        publisher.publish(target_pose)
+        if output_side == 'left':
+            self.left_wrist_rviz_pub.publish(target_pose)
+        elif output_side == 'right':
+            self.right_wrist_rviz_pub.publish(target_pose)
+        else:
+            publisher.publish(target_pose)
 
         self.get_logger().debug(
             'Transformed {} pose: pos=[{:.3f}, {:.3f}, {:.3f}]'.format(
@@ -1062,16 +1129,18 @@ class VRTrajectoryPublisher(Node):
                     self.left_squeeze_value = float(squeeze_val)
                     left_squeeze_msg = Float32()
                     left_squeeze_msg.data = self.left_squeeze_value
-                    self.left_squeeze_pub.publish(left_squeeze_msg)
+                    self.get_squeeze_publisher('left').publish(left_squeeze_msg)
                 else:
                     self.left_squeeze_value = 0.0
 
                 trigger_val = left_state.get('triggerValue')
                 if self.is_valid_float(trigger_val):
-                    calibrated_trigger = self.calibrate_trigger('left', trigger_val)
+                    calibrated_trigger = self.calibrate_trigger(
+                        'left', trigger_val
+                    )
                     left_trigger_msg = Float32()
                     left_trigger_msg.data = calibrated_trigger
-                    self.left_trigger_pub.publish(left_trigger_msg)
+                    self.get_trigger_publisher('left').publish(left_trigger_msg)
             else:
                 self.left_squeeze_value = 0.0
 
@@ -1083,16 +1152,18 @@ class VRTrajectoryPublisher(Node):
                     self.right_squeeze_value = float(squeeze_val)
                     right_squeeze_msg = Float32()
                     right_squeeze_msg.data = self.right_squeeze_value
-                    self.right_squeeze_pub.publish(right_squeeze_msg)
+                    self.get_squeeze_publisher('right').publish(right_squeeze_msg)
                 else:
                     self.right_squeeze_value = 0.0
 
                 trigger_val = right_state.get('triggerValue')
                 if self.is_valid_float(trigger_val):
-                    calibrated_trigger = self.calibrate_trigger('right', trigger_val)
+                    calibrated_trigger = self.calibrate_trigger(
+                        'right', trigger_val
+                    )
                     right_trigger_msg = Float32()
                     right_trigger_msg.data = calibrated_trigger
-                    self.right_trigger_pub.publish(right_trigger_msg)
+                    self.get_trigger_publisher('right').publish(right_trigger_msg)
             else:
                 self.right_squeeze_value = 0.0
 
