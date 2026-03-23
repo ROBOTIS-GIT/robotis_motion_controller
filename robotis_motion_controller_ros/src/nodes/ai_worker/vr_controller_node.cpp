@@ -97,19 +97,19 @@ VRController::VRController()
 
         // Initialize subscribers
   r_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            r_goal_pose_topic_, 10,
+            r_goal_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
             std::bind(&VRController::rightGoalPoseCallback, this, std::placeholders::_1));
 
   l_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            l_goal_pose_topic_, 10,
+            l_goal_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
             std::bind(&VRController::leftGoalPoseCallback, this, std::placeholders::_1));
 
   r_elbow_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            r_elbow_pose_topic_, 10,
+            r_elbow_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
             std::bind(&VRController::rightElbowPoseCallback, this, std::placeholders::_1));
 
   l_elbow_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-            l_elbow_pose_topic_, 10,
+            l_elbow_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
             std::bind(&VRController::leftElbowPoseCallback, this, std::placeholders::_1));
 
   joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
