@@ -3,7 +3,7 @@ Changelog for package robotis_vuer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 0.0.3 (2026-03-20)
 ------------------
-* Merged robotis_applications package into robotis_motion_controller
+* Added mirror mode for VR teleoperation
 * Contributors: Yeonguk Kim
 
 0.0.2 (2026-03-18)
