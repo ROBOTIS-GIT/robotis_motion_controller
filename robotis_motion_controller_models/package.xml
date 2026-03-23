@@ -5,6 +5,9 @@
   <description>Robot models for motion controllers</description>
   <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>Apache 2.0</license>
+  <url type="website">http://ai.robotis.com</url>
+  <url type="repository">https://github.com/ROBOTIS-GIT/robotis_motion_controller</url>
+  <url type="bugtracker">https://github.com/ROBOTIS-GIT/robotis_motion_controller/issues</url>
   <author email="kyu@robotis.com">Yeonguk Kim</author>
   <author email="nhw@robotis.com">Hyunwoo Nam</author>
   <buildtool_depend>ament_cmake</buildtool_depend>
