@@ -1,7 +1,7 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Changelog for package cyclo_motion_controller_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-0.0.3 (2026-03-25)
+0.1.0 (2026-03-25)
 ------------------
 * Namespaced package names to avoid conflicts with other packages
 * Contributors: Yeonguk Kim
