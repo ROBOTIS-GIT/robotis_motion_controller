@@ -30,9 +30,9 @@ jobs:
           linter: ${{ matrix.linter }}
           distribution: rolling
           package-name: |
-            robotis_motion_controller
+            cyclo_motion_controller
             osqp_eigen_vendor
-            robotis_motion_controller_core
-            robotis_motion_controller_models
-            robotis_motion_controller_ros
-            robotis_motion_controller_ros_py
+            cyclo_motion_controller_core
+            cyclo_motion_controller_models
+            cyclo_motion_controller_ros
+            cyclo_motion_controller_ros_py

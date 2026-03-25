@@ -70,11 +70,11 @@ jobs:
         uses: ros-tooling/action-ros-ci@v0.3
         with:
           target-ros2-distro: ${{ matrix.ros_distribution }}
-          vcs-repo-file-url: "https://raw.githubusercontent.com/ROBOTIS-GIT/robotis_motion_controller/${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}/robotis_motion_controller_ci.repos"
+          vcs-repo-file-url: "https://raw.githubusercontent.com/ROBOTIS-GIT/cyclo_control/${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}/cyclo_control_ci.repos"
           package-name: |
-            robotis_motion_controller
+            cyclo_motion_controller
             osqp_eigen_vendor
-            robotis_motion_controller_core
-            robotis_motion_controller_models
-            robotis_motion_controller_ros
-            robotis_motion_controller_ros_py
+            cyclo_motion_controller_core
+            cyclo_motion_controller_models
+            cyclo_motion_controller_ros
+            cyclo_motion_controller_ros_py
