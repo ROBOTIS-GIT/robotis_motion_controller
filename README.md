@@ -1,17 +1,15 @@
-# ROBOTIS Motion Controller
+# CYCLO Motion Controller
 
 This repository contains motion controller packages for the ROBOTIS Physical AI lineup.
 
 ## Repository Structure
 
 ```text
-├── robotis_motion_controller/
+├── cyclo_motion_controller/
 │   ├── CMakeLists.txt
 │   └── package.xml
-├── robotis_motion_controller_core/
-│   ├── cmake/
-│   │   └── robotis_motion_controller_coreConfig.cmake.in
-│   ├── include/robotis_motion_controller_core/
+├── cyclo_motion_controller_core/
+│   ├── include/cyclo_motion_controller_core/
 │   │   ├── common/
 │   │   │   └── ...
 │   │   ├── controllers/
@@ -29,11 +27,10 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 │   │       └── ...
 │   ├── CMakeLists.txt
 │   └── package.xml
-│
-├── robotis_motion_controller_ros/
+├── cyclo_motion_controller_ros/
 │   ├── config/
 │   │   └── ...
-│   ├── include/robotis_motion_controller_ros/
+│   ├── include/cyclo_motion_controller_ros/
 │   │   ├── nodes/
 │   │   │   └── ...
 │   │   └── utils/
@@ -47,121 +44,92 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 │   │       └── ...
 │   ├── CMakeLists.txt
 │   └── package.xml
-│
-├── robotis_motion_controller_ros_py/
+├── cyclo_motion_controller_ros_py/
 │   ├── resource/
 │   │   └── ...
 │   ├── scripts/
 │   │   └── ...
-│   ├── test/
-│   │   └── ...
 │   ├── package.xml
 │   ├── setup.cfg
 │   └── setup.py
-│
-└── robotis_motion_controller_models/
-    ├── launch/
-    │   └── ...
-    ├── models/
-    │   └── ...
-    ├── rviz/
-    │   └── ...
+├── cyclo_motion_controller_models/
+│   ├── launch/
+│   │   └── ...
+│   ├── models/
+│   │   └── ...
+│   ├── CMakeLists.txt
+│   └── package.xml
+└── osqp_eigen_vendor/
+    ├── cmake/
+    ├── third_party/
+    │   └── osqp-eigen/
     ├── CMakeLists.txt
+    ├── THIRD_PARTY_NOTICES.md
     └── package.xml
 ```
-### Directory Description
-`robotis_motion_controller/`
 
-- Meta package that groups all motion controller packages
+## Directory Description
 
-`robotis_motion_controller_core/`
+`cyclo_motion_controller/`
 
-- Core package containing kinematics solver, controllers, and retargeting utilities
-- `include/robotis_motion_controller_core/common/`: Shared types and utility functions
-- `include/robotis_motion_controller_core/optimization/`: QP definitions and solver interfaces
-- `src/controllers/`: Controller implementations for AI Worker and OpenManipulator
-- `src/kinematics/`: Kinematics solver implementation
-- `src/retargeting/`: Python retargeting utilities
+- Meta package that groups all controller packages.
 
-`robotis_motion_controller_ros/`
+`cyclo_motion_controller_core/`
 
-- ROS 2 package containing controller nodes, launch files, and runtime configs
-- `config/`: YAML configuration files for AI Worker, OMX, and OMY controllers
-- `launch/`: Launch files for running the controller nodes
-- `src/nodes/`: ROS 2 node executables organized by robot family
-- `src/utils/`: Utility nodes such as interactive markers and reference checking
+- Core package containing kinematics solver, controllers, and retargeting utilities.
+- `include/cyclo_motion_controller_core/common/`: Shared types and utility functions.
+- `include/cyclo_motion_controller_core/optimization/`: QP definitions and solver interfaces.
+- `src/controllers/`: Controller implementations for AI Worker and OpenManipulator.
+- `src/kinematics/`: Kinematics solver implementation.
+- `src/retargeting/`: Python retargeting utilities.
 
-`robotis_motion_controller_ros_py/`
+`cyclo_motion_controller_ros/`
 
-- ROS 2 Python package containing retargeting-related scripts and tests
-- `scripts/`: Python entrypoints such as `teleop_retargeting.py`
+- ROS 2 package containing controller nodes, launch files, and runtime configs.
+- `config/`: YAML configuration files for AI Worker, OMX, and OMY controllers.
+- `launch/`: Launch files for running the controller nodes.
+- `src/nodes/`: ROS 2 node executables organized by robot family.
+- `src/utils/`: Utility nodes such as interactive markers and reference checking.
 
-`robotis_motion_controller_models/`
+`cyclo_motion_controller_ros_py/`
 
-- Robot model descriptions and RViz resources package
-- `launch/`: Launch files for visualizing robot models
-- `models/`: URDF/SRDF robot models used by the controller
-- `rviz/`: RViz configurations for each supported robot model
+- ROS 2 Python package containing retargeting-related scripts and tests.
+- `scripts/`: Python entrypoints.
+
+`cyclo_motion_controller_models/`
+
+- Robot model descriptions and RViz resources package.
+- `launch/`: Launch files for visualizing robot models.
+- `models/`: URDF/SRDF robot models used by the controller.
+
+`osqp_eigen_vendor/`
+
+- Vendor package that wraps the upstream `osqp-eigen` source tree for this repository.
+- `third_party/osqp-eigen/`: Vendored upstream source.
 
 ## Install (from source)
 
 ### Prerequisites
 
 - **ROS 2 Jazzy** installed
-- [**robotis_interfaces**](https://github.com/ROBOTIS-GIT/robotis_interfaces) available in your workspace
-
-### Install OSQP
-
-```bash
-cd ~/
-git clone https://github.com/osqp/osqp
-cd ~/osqp
-mkdir build && cd build
-cmake -G "Unix Makefiles" ..
-cmake --build .
-sudo cmake --build . --target install
-```
-
-### Install OsqpEigen (osqp-eigen)
-
-```bash
-cd ~/
-mkdir osqp-eigen_install
-git clone https://github.com/robotology/osqp-eigen.git
-cd ~/osqp-eigen
-mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX:PATH=~/osqp-eigen_install ../
-make
-sudo make install
-```
-
-### Set library path (for OsqpEigen)
-
-```bash
-echo "export OsqpEigen_DIR=$HOME/osqp-eigen_install" >> ~/.bashrc
-echo "export LD_LIBRARY_PATH=$HOME/osqp-eigen_install/lib:\$LD_LIBRARY_PATH" >> ~/.bashrc
-source ~/.bashrc
-```
-
-### Install Pinocchio
-
-```bash
-sudo apt update
-sudo apt install -y ros-jazzy-pinocchio
-```
-
-### Install NLopt (for retargeting)
-
-```bash
-sudo apt install python3-nlopt
-```
+- `vcs` is used to import workspace dependencies, and `rosdep` is used to install system dependencies
 
 ### Build in a ROS 2 workspace
 
+Clone the repository and import workspace dependencies:
+
 ```bash
 cd ~/ros2_ws/src
-git clone https://github.com/ROBOTIS-GIT/robotis_motion_controller.git
+git clone https://github.com/ROBOTIS-GIT/cyclo_control.git
+vcs import . < cyclo_control/cyclo_control_ci.repos
+```
+
+Install dependencies via `rosdep`, then build:
+
+```bash
 cd ~/ros2_ws
+sudo apt update
+rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 source install/setup.bash
 ```
@@ -173,7 +141,7 @@ source install/setup.bash
 Launch AI Worker controllers:
 
 ```bash
-ros2 launch robotis_motion_controller_ros ai_worker_controller.launch.py
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py
 ```
 
 You can switch AI Worker controllers via `controller_type`:
@@ -187,10 +155,16 @@ You can switch AI Worker controllers via `controller_type`:
 Example launch commands:
 
 ```bash
-ros2 launch robotis_motion_controller_ros ai_worker_controller.launch.py controller_type:=movel start_interactive_marker:=true
-ros2 launch robotis_motion_controller_ros ai_worker_controller.launch.py controller_type:=movej
-ros2 launch robotis_motion_controller_ros ai_worker_controller.launch.py controller_type:=vr
-ros2 launch robotis_motion_controller_ros ai_worker_controller.launch.py controller_type:=leader
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=movel start_interactive_marker:=true
+```
+```bash
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=movej
+```
+```bash
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=vr
+```
+```bash
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=leader
 ```
 
 When `controller_type:=movel` and `start_interactive_marker:=true`, `ai_worker_controller.launch.py` starts two configurable interactive markers:
@@ -259,7 +233,7 @@ ros2 topic pub --once /leader/joint_trajectory_command_broadcaster_left/raw_join
 Launch the OMX follower controller:
 
 ```bash
-ros2 launch robotis_motion_controller_ros omx_controller.launch.py start_interactive_marker:=true
+ros2 launch cyclo_motion_controller_ros omx_controller.launch.py start_interactive_marker:=true
 ```
 
 You can switch OMX controllers via `controller_type`:
@@ -283,6 +257,7 @@ ros2 topic pub --once /omx_movel_controller/movel robotis_interfaces/msg/MoveL "
   time_from_start: {sec: 3, nanosec: 0}
 }"
 ```
+
 `movel` interpolation duration is supplied per command via `time_from_start`.
 
 Example `movej` command:
@@ -306,7 +281,7 @@ ros2 topic pub --once /omx_movej_controller/movej trajectory_msgs/msg/JointTraje
 Launch the OMY follower controller:
 
 ```bash
-ros2 launch robotis_motion_controller_ros omy_controller.launch.py start_interactive_marker:=true
+ros2 launch cyclo_motion_controller_ros omy_controller.launch.py start_interactive_marker:=true
 ```
 
 You can switch OMY controllers via `controller_type`:
@@ -330,6 +305,7 @@ ros2 topic pub --once /omy_movel_controller/movel robotis_interfaces/msg/MoveL "
   time_from_start: {sec: 3, nanosec: 0}
 }"
 ```
+
 `movel` interpolation duration is supplied per command via `time_from_start`.
 
 Example `movej` command:
@@ -337,8 +313,8 @@ Example `movej` command:
 ```bash
 ros2 topic pub --once /omy_movej_controller/movej trajectory_msgs/msg/JointTrajectory "{
   joint_names: ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'rh_r1_joint'],
-  points: [                               
-    {                                            
+  points: [
+    {
       positions: [0.0, -0.5, 0.8, 0.0, 0.3, 0.0, 1.0],
       time_from_start: {sec: 3, nanosec: 0}
     }
@@ -355,11 +331,13 @@ You can visualize the robot models used by the controllers with the launch files
 Examples:
 
 ```bash
-ros2 launch robotis_motion_controller_models view_ffw_sg2_follower.launch.py
+ros2 launch cyclo_motion_controller_models view_ffw_sg2_follower.launch.py
 ```
+
 ```bash
-ros2 launch robotis_motion_controller_models view_omx_f.launch.py
+ros2 launch cyclo_motion_controller_models view_omx_f.launch.py
 ```
+
 ```bash
-ros2 launch robotis_motion_controller_models view_omy_f3m.launch.py
+ros2 launch cyclo_motion_controller_models view_omy_f3m.launch.py
 ```
