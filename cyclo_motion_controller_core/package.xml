@@ -20,7 +20,6 @@
   <exec_depend>osqp_eigen_vendor</exec_depend>
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-  <test_depend>gtest</test_depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
