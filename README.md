@@ -1,6 +1,6 @@
-# CYCLO Motion Controller
+# CYCLO Control
 
-This repository contains motion controller packages for the ROBOTIS Physical AI lineup.
+This repository provides control packages for the ROBOTIS Physical AI lineup.
 
 ## Repository Structure
 
@@ -72,7 +72,7 @@ This repository contains motion controller packages for the ROBOTIS Physical AI 
 
 `cyclo_motion_controller/`
 
-- Meta package that groups all controller packages.
+- Meta package containing package related to motion control.
 
 `cyclo_motion_controller_core/`
 
@@ -152,6 +152,8 @@ You can switch AI Worker controllers via `controller_type`:
 - `controller_type:=vr` runs `vr_controller_node` and `reference_checker_node`
 - `controller_type:=leader` runs `leader_controller_node` together with `vr_controller_node`
 
+To disable collision checking only between the two grippers, set `disable_gripper_collisions:=true`. This helps maintain smooth handover-style motions when the grippers come into contact.
+
 Example launch commands:
 
 ```bash
@@ -165,6 +167,9 @@ ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controlle
 ```
 ```bash
 ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=leader
+```
+```bash
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py disable_gripper_collisions:=true
 ```
 
 When `controller_type:=movel` and `start_interactive_marker:=true`, `ai_worker_controller.launch.py` starts two configurable interactive markers:
