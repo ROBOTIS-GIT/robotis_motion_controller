@@ -88,16 +88,33 @@ def generate_launch_description():
             description='Path to robot URDF file.',
         ),
         DeclareLaunchArgument(
-            'follower_srdf_path',
+            'default_srdf_path',
             default_value=PathJoinSubstitution(
                 [
                     FindPackageShare('cyclo_motion_controller_models'),
                     'models',
                     'ai_worker',
-                    'ffw_sg2_follower.srdf',
+                    'ffw_sg2_follower_default.srdf',
                 ]
             ),
             description='Path to robot SRDF file.',
+        ),
+        DeclareLaunchArgument(
+            'modified_srdf_path',
+            default_value=PathJoinSubstitution(
+                [
+                    FindPackageShare('cyclo_motion_controller_models'),
+                    'models',
+                    'ai_worker',
+                    'ffw_sg2_follower_modified.srdf',
+                ]
+            ),
+            description='Path to robot SRDF file with hand collision disabled.',
+        ),
+        DeclareLaunchArgument(
+            'disable_gripper_collisions',
+            default_value='false',
+            description='Disable collision checking between arm_l_link7 and arm_r_link7.',
         ),
         DeclareLaunchArgument(
             'leader_urdf_path',
@@ -131,7 +148,9 @@ def generate_launch_description():
 
     start_interactive_marker = LaunchConfiguration('start_interactive_marker')
     follower_urdf_path = LaunchConfiguration('follower_urdf_path')
-    follower_srdf_path = LaunchConfiguration('follower_srdf_path')
+    default_srdf_path = LaunchConfiguration('default_srdf_path')
+    modified_srdf_path = LaunchConfiguration('modified_srdf_path')
+    disable_gripper_collisions = LaunchConfiguration('disable_gripper_collisions')
     leader_urdf_path = LaunchConfiguration('leader_urdf_path')
     base_frame = LaunchConfiguration('base_frame')
     reactivate_service = LaunchConfiguration('reactivate_service')
@@ -142,6 +161,17 @@ def generate_launch_description():
     left_movel_topic = LaunchConfiguration('left_movel_topic')
     config_file = LaunchConfiguration('config_file')
     controller_type = LaunchConfiguration('controller_type')
+    follower_srdf_path = PythonExpression(
+        [
+            "'",
+            modified_srdf_path,
+            "' if '",
+            disable_gripper_collisions,
+            "' == 'true' else '",
+            default_srdf_path,
+            "'",
+        ]
+    )
     ai_worker_movel_controller_node = Node(
         package='cyclo_motion_controller_ros',
         executable='ai_worker_movel_controller_node',
