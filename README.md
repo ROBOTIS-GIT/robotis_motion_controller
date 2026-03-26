@@ -112,7 +112,8 @@ This repository provides control packages for the ROBOTIS Physical AI lineup.
 ### Prerequisites
 
 - **ROS 2 Jazzy** installed
-- `vcs` is used to import workspace dependencies, and `rosdep` is used to install system dependencies
+- **vcs** is used to import workspace dependencies, and **rosdep** is used to install system dependencies
+- **numpy<2** is required
 
 ### Build in a ROS 2 workspace
 
