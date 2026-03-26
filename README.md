@@ -1,4 +1,4 @@
-# CYCLO Control
+# Cyclo Control
 
 This repository provides control packages for the ROBOTIS Physical AI lineup.
 
