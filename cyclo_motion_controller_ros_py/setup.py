@@ -21,7 +21,7 @@ setup(
     zip_safe=True,
     maintainer='Pyo',
     maintainer_email='pyo@robotis.com',
-    description='Motion Controller ROS 2 Python package',
+    description='Cyclo motion controller ROS 2 Python package',
     license='Apache 2.0',
     extras_require={
         'test': [
