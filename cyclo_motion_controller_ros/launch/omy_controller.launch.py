@@ -84,7 +84,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'controlled_link',
-            default_value='end_effector_flange_link',
+            default_value='end_effector_link',
             description='Controlled end-effector link name.',
         ),
         DeclareLaunchArgument(

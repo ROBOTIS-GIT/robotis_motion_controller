@@ -27,8 +27,8 @@ ai_worker_movel_controller:
 
     r_gripper_pose_topic: "/r_gripper_pose"
     l_gripper_pose_topic: "/l_gripper_pose"
-    r_gripper_name: "arm_r_link7"
-    l_gripper_name: "arm_l_link7"
+    r_gripper_name: "end_effector_r_link"
+    l_gripper_name: "end_effector_l_link"
     right_gripper_joint: "gripper_r_joint1"
     left_gripper_joint: "gripper_l_joint1"
     controller_error_topic: "~/controller_error"
