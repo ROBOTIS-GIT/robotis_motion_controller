@@ -3,7 +3,8 @@ Changelog for package cyclo_motion_controller_core
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 0.1.1 (2026-03-30)
 ------------------
-* None
+* Updated license information
+* Contributors: Hyunwoo Nam
 
 0.1.0 (2026-03-25)
 ------------------
