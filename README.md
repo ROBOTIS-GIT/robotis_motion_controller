@@ -347,3 +347,7 @@ ros2 launch cyclo_motion_controller_models view_omx_f.launch.py
 ```bash
 ros2 launch cyclo_motion_controller_models view_omy_f3m.launch.py
 ```
+
+## Acknowledgements
+
+This repository builds on several excellent open-source projects. The retargeting modules in this repository are derived from and informed by [`dex-retargeting`](https://github.com/dexsuite/dex-retargeting). The robot kinematics used throughout the controller stack are based on [`pinocchio`](https://github.com/stack-of-tasks/pinocchio), and the optimization layer uses [`osqp-eigen`](https://github.com/robotology/osqp-eigen) for the Eigen-based OSQP solver interface.

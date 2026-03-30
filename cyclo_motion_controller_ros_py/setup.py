@@ -10,7 +10,7 @@ authors = ', '.join(author for author, _ in authors_info)
 author_emails = ', '.join(email for _, email in authors_info)
 setup(
     name=package_name,
-    version='0.1.0',
+    version='0.1.1',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -21,7 +21,7 @@ setup(
     zip_safe=True,
     maintainer='Pyo',
     maintainer_email='pyo@robotis.com',
-    description='Motion Controller ROS 2 Python package',
+    description='Cyclo motion controller ROS 2 Python package',
     license='Apache 2.0',
     extras_require={
         'test': [

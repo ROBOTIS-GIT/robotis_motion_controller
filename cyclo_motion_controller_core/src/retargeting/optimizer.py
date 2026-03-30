@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# This file is derived from `dex_retargeting/optimizer.py` in the
+# dexsuite/dex-retargeting project:
+# https://github.com/dexsuite/dex-retargeting
+#
+# Original work Copyright (c) 2023 Yuzhe Qin, licensed under the MIT License.
+# Modifications in this file are Copyright 2026 ROBOTIS CO., LTD.
+#
 # Author: Hyunwoo Nam
 
 """DexPilot-based optimizer used for hand retargeting."""

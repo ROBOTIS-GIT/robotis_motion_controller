@@ -1,6 +1,11 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Changelog for package cyclo_motion_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0.1.1 (2026-03-30)
+------------------
+* Added acknowledgements for the dependencies used in the project
+* Contributors: Hyunwoo Nam
+
 0.1.0 (2026-03-25)
 ------------------
 * Refactored package names and added a vendor package for dependency management

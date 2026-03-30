@@ -1,6 +1,11 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Changelog for package cyclo_motion_controller_ros_py
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0.1.1 (2026-03-30)
+------------------
+* Fixed package description
+* Contributors: Hyunwoo Nam
+
 0.1.0 (2026-03-25)
 ------------------
 * Namespaced package names to avoid conflicts with other packages

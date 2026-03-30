@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>cyclo_motion_controller_core</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <description>Core Cyclo motion controller library for inverse kinematics and QP-based control without ROS dependencies</description>
   <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>Apache 2.0</license>
+  <license>MIT</license>
   <url type="website">http://ai.robotis.com</url>
   <url type="repository">https://github.com/ROBOTIS-GIT/cyclo_control</url>
   <url type="bugtracker">https://github.com/ROBOTIS-GIT/cyclo_control/issues</url>

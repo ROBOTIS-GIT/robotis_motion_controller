@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+# This file is derived from `dex_retargeting/robot_wrapper.py` in the
+# dexsuite/dex-retargeting project:
+# https://github.com/dexsuite/dex-retargeting
+#
+# Original work Copyright (c) 2023 Yuzhe Qin, licensed under the MIT License.
+# Modifications in this file are Copyright 2026 ROBOTIS CO., LTD.
+#
 # Author: Hyunwoo Nam
 
 """Thin Pinocchio-based robot wrapper used by the retargeting code."""

@@ -1,6 +1,10 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Changelog for package cyclo_motion_controller_models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0.1.1 (2026-03-30)
+------------------
+* None
+
 0.1.0 (2026-03-25)
 ------------------
 * Namespaced package names to avoid conflicts with other packages
