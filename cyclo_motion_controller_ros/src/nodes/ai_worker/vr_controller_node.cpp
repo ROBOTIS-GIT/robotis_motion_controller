@@ -766,27 +766,15 @@ void VRController::publishTrajectory(const Eigen::VectorXd & q_desired)
       }
     }
 
-            // Publish left arm trajectory (include gripper joint with position 0)
+            // Publish left arm trajectory without gripper joint
     if (!left_arm_indices.empty()) {
-      double gripper_pos = 0.0;
-      if (left_raw_gripper_received_ &&
-        (this->now() - last_left_raw_traj_time_).seconds() < raw_traj_timeout_)
-      {
-        gripper_pos = left_raw_gripper_position_;
-      }
       auto traj_left = createArmTrajectoryMsg(
                     left_arm_joints_, q_desired, left_arm_indices);
       arm_l_pub_->publish(traj_left);
     }
 
-            // Publish right arm trajectory (include gripper joint with position 0)
+            // Publish right arm trajectory without gripper joint
     if (!right_arm_indices.empty()) {
-      double gripper_pos = 0.0;
-      if (right_raw_gripper_received_ &&
-        (this->now() - last_right_raw_traj_time_).seconds() < raw_traj_timeout_)
-      {
-        gripper_pos = right_raw_gripper_position_;
-      }
       auto traj_right = createArmTrajectoryMsg(
                     right_arm_joints_, q_desired, right_arm_indices);
       arm_r_pub_->publish(traj_right);
