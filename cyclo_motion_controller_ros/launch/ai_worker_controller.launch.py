@@ -46,9 +46,9 @@ def generate_launch_description():
             description='Frame for interactive markers and MoveL goals.',
         ),
         DeclareLaunchArgument(
-            'reactivate_service',
-            default_value='/arm/reactivate',
-            description='Service used to reactivate the VR controller.',
+            'reactivate_topic',
+            default_value='/reactivate',
+            description='Bool topic used to toggle the VR controller.',
         ),
         DeclareLaunchArgument(
             'marker_scale',
@@ -153,7 +153,7 @@ def generate_launch_description():
     disable_gripper_collisions = LaunchConfiguration('disable_gripper_collisions')
     leader_urdf_path = LaunchConfiguration('leader_urdf_path')
     base_frame = LaunchConfiguration('base_frame')
-    reactivate_service = LaunchConfiguration('reactivate_service')
+    reactivate_topic = LaunchConfiguration('reactivate_topic')
     marker_scale = LaunchConfiguration('marker_scale')
     right_controlled_link = LaunchConfiguration('right_controlled_link')
     left_controlled_link = LaunchConfiguration('left_controlled_link')
@@ -212,7 +212,7 @@ def generate_launch_description():
             {
                 'urdf_path': follower_urdf_path,
                 'srdf_path': follower_srdf_path,
-                'reactivate_service': reactivate_service,
+                'reactivate_topic': reactivate_topic,
             },
         ],
         output='screen',
@@ -230,7 +230,7 @@ def generate_launch_description():
             config_file,
             {
                 'urdf_path': leader_urdf_path,
-                'reactivate_service': reactivate_service,
+                'reactivate_topic': reactivate_topic,
             },
         ],
         output='screen',

@@ -56,7 +56,7 @@ VRController::VRController()
   collision_safe_distance_ = this->declare_parameter("collision_safe_distance", 0.02);
   urdf_path_ = this->declare_parameter("urdf_path", std::string(""));
   srdf_path_ = this->declare_parameter("srdf_path", std::string(""));
-  reactivate_service_ = this->declare_parameter("reactivate_service", std::string("/arm/reactivate"));
+  reactivate_topic_ = this->declare_parameter("reactivate_topic", std::string("/reactivate"));
   r_goal_pose_topic_ = this->declare_parameter("r_goal_pose_topic", std::string("/r_goal_pose"));
   l_goal_pose_topic_ = this->declare_parameter("l_goal_pose_topic", std::string("/l_goal_pose"));
   r_elbow_pose_topic_ = this->declare_parameter("r_elbow_pose_topic", std::string("/r_elbow_pose"));
@@ -128,19 +128,10 @@ VRController::VRController()
             "/reference_diverged", 10,
             std::bind(&VRController::referenceDivergenceCallback, this,
       std::placeholders::_1));
+  reactivate_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+            reactivate_topic_, 10,
+            std::bind(&VRController::reactivateCallback, this, std::placeholders::_1));
 
-  reactivate_srv_ = this->create_service<std_srvs::srv::Trigger>(
-            reactivate_service_,
-            std::bind(&VRController::reactivateServiceCallback, this, std::placeholders::_1,
-      std::placeholders::_2));
-  if (!reactivate_srv_) {
-    RCLCPP_FATAL(this->get_logger(),
-                "Failed to create reactivate service server '%s'. Controller will not start.",
-                reactivate_service_.c_str());
-    rclcpp::shutdown();
-    return;
-  }
-  RCLCPP_INFO(this->get_logger(), "Reactivate service ready: %s", reactivate_service_.c_str());
 
         // Initialize publishers
   reference_divergence_pub_ = this->create_publisher<std_msgs::msg::Bool>("/reference_diverged",
@@ -231,8 +222,8 @@ VRController::VRController()
   RCLCPP_INFO(this->get_logger(), "Node is ready! Waiting for messages...");
   RCLCPP_WARN(
             this->get_logger(),
-            "Control loop is ready. Call '%s' to start control.",
-            reactivate_service_.c_str());
+            "Control loop is ready. Publish Bool on '%s' to toggle control.",
+            reactivate_topic_.c_str());
 }
 
 VRController::~VRController()
@@ -418,20 +409,33 @@ void VRController::referenceDivergenceCallback(const std_msgs::msg::Bool::Shared
   reference_diverged_ = true;
 }
 
-void VRController::reactivateServiceCallback(
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+void VRController::reactivateCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
-  (void)request;
-  RCLCPP_WARN(this->get_logger(),
-      "Start requested (reactivate). Waiting for reference alignment...");
-  start_requested_ = true;
-  control_enabled_ = false;            // will become true after startup check passes
-  activate_pending_ = false;           // set true when we actually enable
-  reference_diverged_ = true;          // keep inhibited until activation delay finishes
-  response->success = true;
-  response->message =
-    "Start requested. Controller will start when goal-current pose error is within threshold.";
+  if (!msg) {
+    return;
+  }
+  if (msg->data == reactivate_state_) {
+    return;
+  }
+
+  reactivate_state_ = msg->data;
+  if (reactivate_state_) {
+    RCLCPP_WARN(this->get_logger(),
+      "Reactivate topic '%s' set to true. Waiting for reference alignment before enabling controller.",
+      reactivate_topic_.c_str());
+    start_requested_ = true;
+    control_enabled_ = false;
+    activate_pending_ = false;
+    reference_diverged_ = true;
+  } else {
+    RCLCPP_WARN(this->get_logger(),
+      "Reactivate topic '%s' set to false. Disabling controller.",
+      reactivate_topic_.c_str());
+    start_requested_ = false;
+    control_enabled_ = false;
+    activate_pending_ = false;
+    reference_diverged_ = true;
+  }
 }
 
 void VRController::extractJointStates(const sensor_msgs::msg::JointState::SharedPtr & msg)
@@ -493,8 +497,8 @@ void VRController::controlLoopCallback()
     if (debug_count++ % 100 == 0) {
       RCLCPP_WARN_THROTTLE(
                     this->get_logger(), *this->get_clock(), 2000,
-                    "Control loop waiting for reactivate service '%s'...",
-                    reactivate_service_.c_str());
+                    "Control loop waiting for reactivate topic '%s' to become true...",
+                    reactivate_topic_.c_str());
     }
     return;
   }

@@ -45,7 +45,7 @@ LeaderController::LeaderController()
   left_traj_topic_ = this->declare_parameter(
             "left_traj_topic",
             std::string("/leader/joint_trajectory_command_broadcaster_left/raw_joint_trajectory"));
-  reactivate_service_ = this->declare_parameter("reactivate_service", std::string("/arm/reactivate"));
+  reactivate_topic_ = this->declare_parameter("reactivate_topic", std::string("/reactivate"));
   command_timeout_ = this->declare_parameter("command_timeout", 0.1);
   r_goal_pose_topic_ = this->declare_parameter("r_goal_pose_topic", std::string("/r_goal_pose"));
   l_goal_pose_topic_ = this->declare_parameter("l_goal_pose_topic", std::string("/l_goal_pose"));
@@ -68,6 +68,9 @@ LeaderController::LeaderController()
   joint_state_sub_ = this->create_subscription<sensor_msgs::msg::JointState>(
             joint_states_topic_, 10,
             std::bind(&LeaderController::jointStateCallback, this, std::placeholders::_1));
+  reactivate_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+            reactivate_topic_, 10,
+            std::bind(&LeaderController::reactivateCallback, this, std::placeholders::_1));
 
   r_goal_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
             r_goal_pose_topic_, 10);
@@ -78,22 +81,7 @@ LeaderController::LeaderController()
   l_elbow_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
             l_elbow_pose_topic_, 10);
 
-  reactivate_client_ = this->create_client<std_srvs::srv::Trigger>(reactivate_service_);
-  if (!reactivate_client_) {
-    RCLCPP_FATAL(this->get_logger(),
-                "Failed to create reactivate service client '%s'.",
-                reactivate_service_.c_str());
-    rclcpp::shutdown();
-    return;
-  }
-  if (!reactivate_client_->wait_for_service(std::chrono::seconds(2))) {
-    RCLCPP_WARN(this->get_logger(),
-                "Reactivate service '%s' not available yet; will retry on first publish.",
-                reactivate_service_.c_str());
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Reactivate service available: %s",
-        reactivate_service_.c_str());
-  }
+  RCLCPP_INFO(this->get_logger(), "Reactivate topic subscribed: %s", reactivate_topic_.c_str());
 
   try {
     if (urdf_path_.empty()) {
@@ -151,6 +139,10 @@ LeaderController::LeaderController()
             joint_state_sub_ ? "OK" : "FAILED");
   RCLCPP_INFO(this->get_logger(), "========================================");
   RCLCPP_INFO(this->get_logger(), "Node is ready! Waiting for messages...");
+  RCLCPP_WARN(
+            this->get_logger(),
+            "Control loop is ready. Publish Bool on '%s' to toggle controller output.",
+            reactivate_topic_.c_str());
 }
 
 LeaderController::~LeaderController()
@@ -246,33 +238,18 @@ void LeaderController::updateLiftJointFromJointState(const sensor_msgs::msg::Joi
   }
 }
 
-bool LeaderController::requestReactivateOnce()
+void LeaderController::reactivateCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
-  if (!reactivate_client_) {
-    return false;
-  }
-  if (!reactivate_client_->service_is_ready()) {
-    return false;
+  if (!msg || msg->data == reactivate_state_) {
+    return;
   }
 
-  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-  (void)reactivate_client_->async_send_request(
-            request,
-    [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
-      try {
-        const auto resp = future.get();
-        if (resp->success) {
-          RCLCPP_INFO(this->get_logger(), "Reactivate service call succeeded: %s",
-            resp->message.c_str());
-        } else {
-          RCLCPP_WARN(this->get_logger(), "Reactivate service call failed: %s",
-            resp->message.c_str());
-        }
-      } catch (const std::exception & e) {
-        RCLCPP_WARN(this->get_logger(), "Reactivate service call exception: %s", e.what());
-      }
-            });
-  return true;
+  reactivate_state_ = msg->data;
+  RCLCPP_WARN(this->get_logger(),
+    "Reactivate topic '%s' set to %s. %s",
+    reactivate_topic_.c_str(),
+    reactivate_state_ ? "true" : "false",
+    reactivate_state_ ? "Enabling leader controller output." : "Disabling leader controller output.");
 }
 
 void LeaderController::controlLoopCallback()
@@ -290,7 +267,6 @@ void LeaderController::controlLoopCallback()
 
   if (!right_traj_has_publisher && !left_traj_has_publisher) {
     was_publishing_reference_ = false;
-    reactivate_requested_ = false;
     if (debug_count++ % 100 == 0) {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
                     "No publishers on trajectory topics; skipping goal pose publish");
@@ -309,7 +285,6 @@ void LeaderController::controlLoopCallback()
         // Wait until we have at least one arm trajectory message before publishing any goal pose.
   if (!has_recent_reference) {
     was_publishing_reference_ = false;
-    reactivate_requested_ = false;
     if (debug_count++ % 100 == 0) {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
                     "Control loop waiting for joint trajectory commands...");
@@ -317,18 +292,16 @@ void LeaderController::controlLoopCallback()
     return;
   }
 
-  // When a command stream starts (or resumes after timeout), trigger
-  // slow-start via reactivate service. Keep publishing references even if the
-  // service isn't ready yet; we'll retry calling it until it is.
-  if (!reactivate_requested_) {
-    if (requestReactivateOnce()) {
-      reactivate_requested_ = true;
-    } else {
+  if (!reactivate_state_) {
+    was_publishing_reference_ = false;
+    if (debug_count++ % 100 == 0) {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                    "Reactivate service '%s' not ready; will retry...",
-                    reactivate_service_.c_str());
+                    "Control loop waiting for reactivate topic '%s' to become true...",
+                    reactivate_topic_.c_str());
     }
+    return;
   }
+
   was_publishing_reference_ = true;
 
   try {

@@ -75,7 +75,7 @@ vr_controller:
     slack_penalty: 1000.0
     cbf_alpha: 50.0
     
-    reactivate_service: "/arm/reactivate"
+    reactivate_topic: "/reactivate"
     joint_states_topic: "/joint_states"
     right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/joint_trajectory"
     left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"
@@ -106,7 +106,7 @@ leader_controller:
     joint_states_topic: "/joint_states" 
     right_traj_topic: "/leader/joint_trajectory_command_broadcaster_right/raw_joint_trajectory"
     left_traj_topic: "/leader/joint_trajectory_command_broadcaster_left/raw_joint_trajectory"
-    reactivate_service: "/arm/reactivate"
+    reactivate_topic: "/reactivate"
 
     command_timeout: 0.1
 
