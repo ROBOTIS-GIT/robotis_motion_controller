@@ -72,7 +72,7 @@ jobs:
           target-ros2-distro: ${{ matrix.ros_distribution }}
           vcs-repo-file-url: "https://raw.githubusercontent.com/ROBOTIS-GIT/cyclo_control/${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}/cyclo_control_ci.repos"
           package-name: |
-            cyclo_motion_controller
+            cyclo_control
             osqp_eigen_vendor
             cyclo_motion_controller_core
             cyclo_motion_controller_models

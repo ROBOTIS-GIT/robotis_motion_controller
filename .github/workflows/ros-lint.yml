@@ -30,7 +30,7 @@ jobs:
           linter: ${{ matrix.linter }}
           distribution: rolling
           package-name: |
-            cyclo_motion_controller
+            cyclo_control
             osqp_eigen_vendor
             cyclo_motion_controller_core
             cyclo_motion_controller_models
