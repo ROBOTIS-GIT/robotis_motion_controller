@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>cyclo_motion_controller</name>
+  <name>cyclo_control</name>
   <version>0.1.1</version>
   <description>
-    Meta package for Cyclo motion controller
+    Meta package for Cyclo Control
   </description>
   <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>Apache 2.0</license>
