@@ -249,7 +249,8 @@ void LeaderController::reactivateCallback(const std_msgs::msg::Bool::SharedPtr m
     "Reactivate topic '%s' set to %s. %s",
     reactivate_topic_.c_str(),
     reactivate_state_ ? "true" : "false",
-    reactivate_state_ ? "Enabling leader controller output." : "Disabling leader controller output.");
+    reactivate_state_ ? "Enabling leader controller output." :
+      "Disabling leader controller output.");
 }
 
 void LeaderController::controlLoopCallback()

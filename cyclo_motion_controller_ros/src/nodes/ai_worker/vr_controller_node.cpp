@@ -421,7 +421,8 @@ void VRController::reactivateCallback(const std_msgs::msg::Bool::SharedPtr msg)
   reactivate_state_ = msg->data;
   if (reactivate_state_) {
     RCLCPP_WARN(this->get_logger(),
-      "Reactivate topic '%s' set to true. Waiting for reference alignment before enabling controller.",
+      "Reactivate topic '%s' set to true. "
+      "Waiting for reference alignment before enabling controller.",
       reactivate_topic_.c_str());
     start_requested_ = true;
     control_enabled_ = false;
