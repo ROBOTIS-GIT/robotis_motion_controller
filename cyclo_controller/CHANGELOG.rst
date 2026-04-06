@@ -5,6 +5,7 @@ Changelog for package cyclo_control
 ------------------
 * Removed gripper joint from the trajectory messages
 * Renamed meta package to cyclo_control
+* Changed reactivate service to topic
 * Contributors: Yeonguk Kim
 
 0.1.1 (2026-03-30)
