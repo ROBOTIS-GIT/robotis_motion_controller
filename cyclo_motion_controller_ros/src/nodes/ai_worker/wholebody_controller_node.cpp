@@ -45,8 +45,8 @@ public:
     kp_orientation_ = this->declare_parameter("kp_orientation", 50.0);
     weight_position_ = this->declare_parameter("weight_position", 1000.0);
     weight_orientation_ = this->declare_parameter("weight_orientation", 100.0);
-    weight_elbow_position_ = this->declare_parameter("weight_elbow_position", 8.0);
-    weight_arm_base_position_ = this->declare_parameter("weight_arm_base_position", 10.0);
+    weight_elbow_position_ = this->declare_parameter("weight_elbow_position", 80.0);
+    weight_arm_base_position_ = this->declare_parameter("weight_arm_base_position", 50.0);
     weight_damping_ = this->declare_parameter("weight_damping", 0.1);
     slack_penalty_ = this->declare_parameter("slack_penalty", 1000.0);
     cbf_alpha_ = this->declare_parameter("cbf_alpha", 5.0);
@@ -86,6 +86,17 @@ public:
     goal_ref_timeout_ = this->declare_parameter("goal_ref_timeout", 0.5);
     elbow_ref_timeout_ = this->declare_parameter("elbow_ref_timeout", 0.3);
     arm_base_ref_timeout_ = this->declare_parameter("arm_base_ref_timeout", 0.3);
+    goal_motion_detect_timeout_ = this->declare_parameter("goal_motion_detect_timeout", 0.25);
+    goal_motion_position_threshold_ =
+      this->declare_parameter("goal_motion_position_threshold", 1e-4);
+    goal_motion_orientation_threshold_ =
+      this->declare_parameter("goal_motion_orientation_threshold", 1e-3);
+    lift_transition_blend_duration_ =
+      this->declare_parameter("lift_transition_blend_duration", 2.0);
+    arm_base_motion_detect_timeout_ =
+      this->declare_parameter("arm_base_motion_detect_timeout", 0.25);
+    arm_base_motion_detect_threshold_ =
+      this->declare_parameter("arm_base_motion_detect_threshold", 1e-4);
     lift_topic_ = this->declare_parameter(
       "lift_topic", std::string("/leader/joystick_controller_right/joint_trajectory"));
     lift_vel_bound_ = this->declare_parameter("lift_vel_bound", 4.8);
@@ -115,6 +126,8 @@ public:
     last_r_elbow_pose_time_ = this->now();
     last_l_elbow_pose_time_ = this->now();
     last_arm_base_pose_time_ = this->now();
+    last_goal_motion_time_ = this->now();
+    last_arm_base_motion_time_ = this->now();
 
     r_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
       r_goal_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
@@ -221,14 +234,18 @@ private:
 
   void rightGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
   {
-    r_goal_pose_ = computePoseMat(*msg);
+    const Eigen::Affine3d next_pose = computePoseMat(*msg);
+    updateGoalMotionState(next_pose, r_goal_pose_received_ ? &r_goal_pose_ : nullptr);
+    r_goal_pose_ = next_pose;
     r_goal_pose_received_ = true;
     last_r_goal_pose_time_ = this->now();
   }
 
   void leftGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
   {
-    l_goal_pose_ = computePoseMat(*msg);
+    const Eigen::Affine3d next_pose = computePoseMat(*msg);
+    updateGoalMotionState(next_pose, l_goal_pose_received_ ? &l_goal_pose_ : nullptr);
+    l_goal_pose_ = next_pose;
     l_goal_pose_received_ = true;
     last_l_goal_pose_time_ = this->now();
   }
@@ -249,7 +266,17 @@ private:
 
   void armBasePoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
   {
-    arm_base_goal_pose_ = computePoseMat(*msg);
+    const Eigen::Affine3d next_pose = computePoseMat(*msg);
+    if (arm_base_pose_received_) {
+      const double delta_z =
+        std::abs(next_pose.translation().z() - arm_base_goal_pose_.translation().z());
+      if (delta_z > arm_base_motion_detect_threshold_) {
+        last_arm_base_motion_time_ = this->now();
+      }
+    } else {
+      last_arm_base_motion_time_ = this->now();
+    }
+    arm_base_goal_pose_ = next_pose;
     arm_base_pose_received_ = true;
     last_arm_base_pose_time_ = this->now();
   }
@@ -344,15 +371,6 @@ private:
     }
 
     try {
-      Eigen::VectorXd q_feedback = (q_desired_.size() == q_.size()) ? q_desired_ : q_;
-      kinematics_solver_->updateState(q_feedback, qdot_);
-
-      const Eigen::Affine3d right_gripper_pose = kinematics_solver_->getPose(r_gripper_name_);
-      const Eigen::Affine3d left_gripper_pose = kinematics_solver_->getPose(l_gripper_name_);
-      const Eigen::Affine3d right_elbow_pose = kinematics_solver_->getPose(r_elbow_name_);
-      const Eigen::Affine3d left_elbow_pose = kinematics_solver_->getPose(l_elbow_name_);
-      const Eigen::Affine3d arm_base_pose = kinematics_solver_->getPose(arm_base_name_);
-
       const rclcpp::Time now = this->now();
       const bool right_goal_active =
         r_goal_pose_received_ && (now - last_r_goal_pose_time_).seconds() < goal_ref_timeout_;
@@ -364,10 +382,28 @@ private:
         l_elbow_pose_received_ && (now - last_l_elbow_pose_time_).seconds() < elbow_ref_timeout_;
       const bool arm_base_active =
         arm_base_pose_received_ && (now - last_arm_base_pose_time_).seconds() < arm_base_ref_timeout_;
+      const bool arm_base_ref_moving_recently =
+        arm_base_pose_received_ &&
+        (now - last_arm_base_motion_time_).seconds() < arm_base_motion_detect_timeout_;
+      const bool goal_ref_moving_recently =
+        (now - last_goal_motion_time_).seconds() < goal_motion_detect_timeout_;
       const bool fixed_base_phase_active =
-        arm_base_active && (right_elbow_active || left_elbow_active);
+        arm_base_active &&
+        !arm_base_ref_moving_recently &&
+        (right_elbow_active || left_elbow_active);
 
       updateLiftVelocityBound(fixed_base_phase_active ? lift_vel_bound_fixed_base_ : lift_vel_bound_);
+
+      Eigen::VectorXd q_feedback = (q_desired_.size() == q_.size()) ? q_desired_ : q_;
+      blendLiftStateForGoalTransition(
+        q_feedback, now, fixed_base_phase_active && goal_ref_moving_recently);
+      kinematics_solver_->updateState(q_feedback, qdot_);
+
+      const Eigen::Affine3d right_gripper_pose = kinematics_solver_->getPose(r_gripper_name_);
+      const Eigen::Affine3d left_gripper_pose = kinematics_solver_->getPose(l_gripper_name_);
+      const Eigen::Affine3d right_elbow_pose = kinematics_solver_->getPose(r_elbow_name_);
+      const Eigen::Affine3d left_elbow_pose = kinematics_solver_->getPose(l_elbow_name_);
+      const Eigen::Affine3d arm_base_pose = kinematics_solver_->getPose(arm_base_name_);
 
       if (!right_goal_active) {
         r_goal_pose_ = right_gripper_pose;
@@ -446,7 +482,10 @@ private:
       }
 
       q_desired_ = q_feedback + optimal_velocities * dt_;
-      publishTrajectory(q_desired_);
+      Eigen::VectorXd q_command = q_desired_;
+      applyLiftCommandBlend(
+        q_command, now, fixed_base_phase_active && goal_ref_moving_recently);
+      publishTrajectory(q_command);
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "Error in control loop: %s", e.what());
     }
@@ -466,6 +505,85 @@ private:
     (void)kinematics_solver_->setJointVelocityBoundsByIndex(
       lift_joint_index_, -clamped_bound, clamped_bound);
     current_lift_vel_bound_ = clamped_bound;
+  }
+
+  void updateGoalMotionState(
+    const Eigen::Affine3d & next_pose,
+    const Eigen::Affine3d * previous_pose)
+  {
+    if (previous_pose == nullptr) {
+      last_goal_motion_time_ = this->now();
+      return;
+    }
+
+    const double pos_delta = (next_pose.translation() - previous_pose->translation()).norm();
+    const double ori_delta =
+      Eigen::Quaterniond(next_pose.linear()).angularDistance(Eigen::Quaterniond(previous_pose->linear()));
+    if (
+      pos_delta > goal_motion_position_threshold_ ||
+      ori_delta > goal_motion_orientation_threshold_)
+    {
+      const rclcpp::Time now = this->now();
+      if ((now - last_goal_motion_time_).seconds() >= goal_motion_detect_timeout_) {
+        lift_transition_active_ = false;
+      }
+      last_goal_motion_time_ = now;
+    }
+  }
+
+  void blendLiftStateForGoalTransition(
+    Eigen::VectorXd & q_feedback,
+    const rclcpp::Time & now,
+    const bool should_blend)
+  {
+    if (lift_joint_index_ < 0 || lift_joint_index_ >= q_feedback.size()) {
+      return;
+    }
+
+    if (!should_blend) {
+      lift_transition_active_ = false;
+      return;
+    }
+
+    if (!lift_transition_active_) {
+      lift_transition_active_ = true;
+      lift_transition_start_time_ = now;
+      lift_transition_start_position_ = q_[lift_joint_index_];
+      lift_transition_target_position_ = q_feedback[lift_joint_index_];
+    } else {
+      lift_transition_target_position_ = q_feedback[lift_joint_index_];
+    }
+
+    const double alpha = std::clamp(
+      (now - lift_transition_start_time_).seconds() /
+      std::max(lift_transition_blend_duration_, 1e-6),
+      0.0, 1.0);
+    q_feedback[lift_joint_index_] =
+      (1.0 - alpha) * lift_transition_start_position_ +
+      alpha * lift_transition_target_position_;
+  }
+
+  void applyLiftCommandBlend(
+    Eigen::VectorXd & q_command,
+    const rclcpp::Time & now,
+    const bool should_blend) const
+  {
+    if (
+      !should_blend ||
+      lift_joint_index_ < 0 ||
+      lift_joint_index_ >= q_command.size() ||
+      !lift_transition_active_)
+    {
+      return;
+    }
+
+    const double alpha = std::clamp(
+      (now - lift_transition_start_time_).seconds() /
+      std::max(lift_transition_blend_duration_, 1e-6),
+      0.0, 1.0);
+    q_command[lift_joint_index_] =
+      (1.0 - alpha) * q_[lift_joint_index_] +
+      alpha * q_command[lift_joint_index_];
   }
 
   Eigen::Affine3d computePoseMat(const geometry_msgs::msg::PoseStamped & pose) const
@@ -506,7 +624,7 @@ private:
   {
     trajectory_msgs::msg::JointTrajectory traj_msg;
     traj_msg.joint_names = arm_joint_names;
-    traj_msg.joint_names.push_back(gripper_joint_name);
+    // traj_msg.joint_names.push_back(gripper_joint_name);
 
     trajectory_msgs::msg::JointTrajectoryPoint point;
     point.time_from_start = rclcpp::Duration::from_seconds(trajectory_time_);
@@ -515,7 +633,7 @@ private:
         point.positions.push_back(positions[idx]);
       }
     }
-    point.positions.push_back(gripper_position);
+    // point.positions.push_back(gripper_position);
     traj_msg.points.push_back(point);
     return traj_msg;
   }
@@ -631,6 +749,12 @@ private:
   double goal_ref_timeout_;
   double elbow_ref_timeout_;
   double arm_base_ref_timeout_;
+  double goal_motion_detect_timeout_;
+  double goal_motion_position_threshold_;
+  double goal_motion_orientation_threshold_;
+  double lift_transition_blend_duration_;
+  double arm_base_motion_detect_timeout_;
+  double arm_base_motion_detect_threshold_;
   double lift_vel_bound_;
   double lift_vel_bound_fixed_base_;
   double current_lift_vel_bound_ = -1.0;
@@ -706,8 +830,14 @@ private:
   rclcpp::Time last_r_elbow_pose_time_;
   rclcpp::Time last_l_elbow_pose_time_;
   rclcpp::Time last_arm_base_pose_time_;
+  rclcpp::Time last_goal_motion_time_;
+  rclcpp::Time last_arm_base_motion_time_;
+  rclcpp::Time lift_transition_start_time_;
 
   double dt_;
+  double lift_transition_start_position_ = 0.0;
+  double lift_transition_target_position_ = 0.0;
+  bool lift_transition_active_ = false;
   std::vector<std::string> left_arm_joints_;
   std::vector<std::string> right_arm_joints_;
   int lift_joint_index_ = -1;
