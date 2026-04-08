@@ -144,6 +144,11 @@ def generate_launch_description():
             default_value='movel',
             description='Controller type (movel, movej, leader, vr). Default: movel.',
         ),
+        DeclareLaunchArgument(
+            'hand',
+            default_value='true',
+            description='Whether to run hand retargeting node. Default: true.',
+        ),
     ]
 
     start_interactive_marker = LaunchConfiguration('start_interactive_marker')
@@ -161,6 +166,7 @@ def generate_launch_description():
     left_movel_topic = LaunchConfiguration('left_movel_topic')
     config_file = LaunchConfiguration('config_file')
     controller_type = LaunchConfiguration('controller_type')
+    hand = LaunchConfiguration('hand')
     follower_srdf_path = PythonExpression(
         [
             "'",
@@ -313,6 +319,24 @@ def generate_launch_description():
         ),
     )
 
+    hand_retargeting_node = Node(
+        package='cyclo_motion_controller_ros_py',
+        executable='retargeting_teleop',
+        name='retargeting_teleop',
+        output='screen',
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "'",
+                    controller_type,
+                    "' == 'vr' and '",
+                    hand,
+                    "' == 'true'",
+                ]
+            )
+        ),
+    )
+
     return LaunchDescription(
         declared_arguments
         + [
@@ -323,5 +347,6 @@ def generate_launch_description():
             reference_checker_node,
             right_interactive_marker,
             left_interactive_marker,
+            hand_retargeting_node,
         ]
     )
