@@ -165,7 +165,7 @@ ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controlle
 ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=vr
 ```
 ```bash
-ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=vr hand:=false
+ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=vr hand:=true
 ```
 ```bash
 ros2 launch cyclo_motion_controller_ros ai_worker_controller.launch.py controller_type:=leader
