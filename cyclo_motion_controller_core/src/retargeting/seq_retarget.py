@@ -170,6 +170,19 @@ class ROBOTISHandRetargeter:
         finger_lengths = np.linalg.norm(tip_positions - wrist_pos, axis=1)
         return finger_lengths.astype(np.float32)
 
+    def set_pre_calibration(self, human_lengths: list[float]) -> None:
+        lengths = np.array(human_lengths, dtype=np.float32)
+        if lengths.shape != (5,):
+            raise ValueError(f'human_lengths must have exactly 5 elements, got {len(human_lengths)}')
+        self.finger_scaling = lengths / (self.robot_finger_lengths + 1e-6)
+        self.optimizer.finger_scaling = self.finger_scaling
+        self.optimizer.vector_scaling = self.optimizer.build_vector_scaling()
+        self.is_calibrated = True
+
+        print(f'[Retargeter] Pre-calibrated finger scaling: {self.finger_scaling}')
+        print(f'[Retargeter] Pre-calibration human finger lengths: {lengths}')
+        print('[Retargeter] Robot finger lengths: ' f'{self.robot_finger_lengths}')
+
     def _calibrate_scaling(self, mediapipe_pose: np.ndarray) -> None:
         """Calibrate per-finger scaling from the first observed hand pose."""
         human_lengths = self._compute_human_finger_lengths(mediapipe_pose)
