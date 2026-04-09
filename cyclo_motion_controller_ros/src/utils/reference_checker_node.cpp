@@ -34,11 +34,11 @@ ReferenceDivergenceChecker::ReferenceDivergenceChecker()
           "/reference_diverged", 10);
 
   r_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-          r_goal_pose_topic_, 10,
+          r_goal_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
           std::bind(&ReferenceDivergenceChecker::rightGoalPoseCallback, this,
       std::placeholders::_1));
   l_goal_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-          l_goal_pose_topic_, 10,
+          l_goal_pose_topic_, rclcpp::QoS(rclcpp::KeepLast(1)).best_effort(),
           std::bind(&ReferenceDivergenceChecker::leftGoalPoseCallback, this,
       std::placeholders::_1));
 }
