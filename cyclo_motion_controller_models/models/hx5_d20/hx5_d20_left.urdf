@@ -33,7 +33,7 @@
       <child link="finger_l_link1" />
       <origin xyz="-0.0125 -0.03493 0.04475" rpy="0 0 0" />
       <axis xyz="1 0 0" />
-      <limit velocity="4.8" effort="1000" lower="-1.57" upper="1.57" />
+      <limit velocity="4.8" effort="1000" lower="-1.57" upper="1.57" /> 
       <dynamics damping="0.05" />
    </joint>
    <link name="finger_l_link1">
@@ -68,7 +68,7 @@
       <child link="finger_l_link2" />
       <origin xyz="0.039 0.0 0.0" rpy="0 0 0" />
       <axis xyz="0 0 1" />
-      <limit velocity="4.8" effort="1000" lower="0.0" upper="1.57" />
+      <limit velocity="4.8" effort="1000" lower="0.0" upper="1.57" /> <!-- upper 3.14 in other repository-->
       <dynamics damping="0.05" />
    </joint>
    <link name="finger_l_link2">
