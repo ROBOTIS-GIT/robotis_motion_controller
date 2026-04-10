@@ -63,6 +63,8 @@ AIWorkerMoveLController::AIWorkerMoveLController()
   left_traj_topic_ = this->declare_parameter(
     "left_traj_topic",
     std::string("/leader/joint_trajectory_command_broadcaster_left/joint_trajectory"));
+  enable_right_arm_output_ = this->declare_parameter("enable_right_arm_output", true);
+  enable_left_arm_output_ = this->declare_parameter("enable_left_arm_output", true);
   lift_topic_ = this->declare_parameter(
     "lift_topic",
     std::string("/leader/joystick_controller_right/joint_trajectory"));
@@ -461,12 +463,12 @@ void AIWorkerMoveLController::publishTrajectory(const Eigen::VectorXd & q_desire
     }
   }
 
-  if (!left_arm_indices.empty()) {
+  if (enable_left_arm_output_ && !left_arm_indices.empty()) {
     arm_l_pub_->publish(createArmTrajectoryMsg(
       left_arm_joints_, q_desired, left_arm_indices));
   }
 
-  if (!right_arm_indices.empty()) {
+  if (enable_right_arm_output_ && !right_arm_indices.empty()) {
     arm_r_pub_->publish(createArmTrajectoryMsg(
       right_arm_joints_, q_desired, right_arm_indices));
   }

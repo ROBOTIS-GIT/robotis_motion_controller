@@ -101,6 +101,14 @@ add_executable(reference_checker_node
   src/utils/reference_checker_node.cpp
 )
 
+add_executable(leader_trajectory_sequence_node
+  src/utils/leader_trajectory_sequence_node.cpp
+)
+
+add_executable(movel_showcase_demo_node
+  src/utils/movel_showcase_demo_node.cpp
+)
+
 # Add include directories to the target
 message(STATUS "CYCLO_MOTION_CONTROLLER_CORE_INCLUDE_DIR = ${CYCLO_MOTION_CONTROLLER_CORE_INCLUDE_DIR}")
 
@@ -374,6 +382,47 @@ target_link_libraries(reference_checker_node PRIVATE
   ${geometry_msgs_TARGETS}
 )
 
+target_include_directories(leader_trajectory_sequence_node PRIVATE
+  ${rclcpp_INCLUDE_DIRS}
+  ${trajectory_msgs_INCLUDE_DIRS}
+)
+target_link_libraries(leader_trajectory_sequence_node PRIVATE
+  ${rclcpp_LIBRARIES}
+  ${trajectory_msgs_LIBRARIES}
+  ${rclcpp_TARGETS}
+  ${trajectory_msgs_TARGETS}
+)
+
+target_include_directories(movel_showcase_demo_node PRIVATE
+  ${robotis_interfaces_INCLUDE_DIRS}
+  ${rclcpp_INCLUDE_DIRS}
+  ${geometry_msgs_INCLUDE_DIRS}
+  ${sensor_msgs_INCLUDE_DIRS}
+  ${trajectory_msgs_INCLUDE_DIRS}
+  ${visualization_msgs_INCLUDE_DIRS}
+  ${tf2_ros_INCLUDE_DIRS}
+  ${ament_index_cpp_INCLUDE_DIRS}
+  ${CYCLO_MOTION_CONTROLLER_CORE_NAMESPACE_INCLUDE_DIR}
+)
+target_link_libraries(movel_showcase_demo_node PRIVATE
+  ${robotis_interfaces_LIBRARIES}
+  ${rclcpp_LIBRARIES}
+  ${geometry_msgs_LIBRARIES}
+  ${sensor_msgs_LIBRARIES}
+  ${trajectory_msgs_LIBRARIES}
+  ${visualization_msgs_LIBRARIES}
+  ${tf2_ros_LIBRARIES}
+  ${ament_index_cpp_LIBRARIES}
+  ${robotis_interfaces_TARGETS}
+  ${rclcpp_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${trajectory_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${tf2_ros_TARGETS}
+  ${ament_index_cpp_TARGETS}
+)
+
 target_link_libraries(vr_controller_node PRIVATE
   Eigen3::Eigen
   pinocchio::pinocchio
@@ -432,6 +481,7 @@ if(cyclo_motion_controller_core_FOUND)
   target_link_libraries(omx_movel_controller_node PRIVATE cyclo_motion_controller_core::cyclo_motion_controller_core)
   target_link_libraries(omy_movej_controller_node PRIVATE cyclo_motion_controller_core::cyclo_motion_controller_core)
   target_link_libraries(omy_movel_controller_node PRIVATE cyclo_motion_controller_core::cyclo_motion_controller_core)
+  target_link_libraries(movel_showcase_demo_node PRIVATE cyclo_motion_controller_core::cyclo_motion_controller_core)
 else()
   # Link with full path for fallback
   target_link_libraries(vr_controller_node PRIVATE ${CYCLO_MOTION_CONTROLLER_CORE_LIB})
@@ -442,6 +492,7 @@ else()
   target_link_libraries(omx_movel_controller_node PRIVATE ${CYCLO_MOTION_CONTROLLER_CORE_LIB})
   target_link_libraries(omy_movej_controller_node PRIVATE ${CYCLO_MOTION_CONTROLLER_CORE_LIB})
   target_link_libraries(omy_movel_controller_node PRIVATE ${CYCLO_MOTION_CONTROLLER_CORE_LIB})
+  target_link_libraries(movel_showcase_demo_node PRIVATE ${CYCLO_MOTION_CONTROLLER_CORE_LIB})
 endif()
 
 # Install executable
@@ -482,6 +533,14 @@ install(TARGETS interactive_marker_node
 )
 
 install(TARGETS reference_checker_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS leader_trajectory_sequence_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS movel_showcase_demo_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

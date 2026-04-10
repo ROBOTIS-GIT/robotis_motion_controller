@@ -67,6 +67,8 @@ private:
   std::string right_traj_topic_;
   std::string left_traj_topic_;
   std::string lift_topic_;
+  bool enable_right_arm_output_;
+  bool enable_left_arm_output_;
   double lift_vel_bound_;
   std::string r_gripper_pose_topic_;
   std::string l_gripper_pose_topic_;

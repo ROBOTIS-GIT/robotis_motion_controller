@@ -76,6 +76,16 @@ def generate_launch_description():
             description='MoveL topic for the left interactive marker.',
         ),
         DeclareLaunchArgument(
+            'enable_right_arm_output',
+            default_value='true',
+            description='Whether the MoveL controller publishes right-arm joint trajectories.',
+        ),
+        DeclareLaunchArgument(
+            'enable_left_arm_output',
+            default_value='true',
+            description='Whether the MoveL controller publishes left-arm joint trajectories.',
+        ),
+        DeclareLaunchArgument(
             'follower_urdf_path',
             default_value=PathJoinSubstitution(
                 [
@@ -164,6 +174,8 @@ def generate_launch_description():
     left_controlled_link = LaunchConfiguration('left_controlled_link')
     right_movel_topic = LaunchConfiguration('right_movel_topic')
     left_movel_topic = LaunchConfiguration('left_movel_topic')
+    enable_right_arm_output = LaunchConfiguration('enable_right_arm_output')
+    enable_left_arm_output = LaunchConfiguration('enable_left_arm_output')
     config_file = LaunchConfiguration('config_file')
     controller_type = LaunchConfiguration('controller_type')
     hand = LaunchConfiguration('hand')
@@ -186,6 +198,8 @@ def generate_launch_description():
             {
                 'urdf_path': follower_urdf_path,
                 'srdf_path': follower_srdf_path,
+                'enable_right_arm_output': enable_right_arm_output,
+                'enable_left_arm_output': enable_left_arm_output,
             },
         ],
         output='screen',

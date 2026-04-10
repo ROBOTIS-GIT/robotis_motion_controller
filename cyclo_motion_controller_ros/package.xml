@@ -24,6 +24,7 @@
   <depend>cyclo_motion_controller_core</depend>
   <depend>ament_index_cpp</depend>
   <exec_depend>cyclo_motion_controller_models</exec_depend>
+  <exec_depend>cyclo_motion_controller_ros_py</exec_depend>
   <!-- Build dependencies -->
   <build_depend>eigen</build_depend>
   <build_depend>pinocchio</build_depend>
